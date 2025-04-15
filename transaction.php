@@ -92,36 +92,27 @@
                                                     die("❌ Database connection failed: " . mysqli_connect_error());
                                                 }
 
-                                                $query = "SELECT * FROM transactions";
+                                                $query = "SELECT 
+                t.*, 
+                bd.BRANCH_NAME
+              FROM 
+                transactions t
+              LEFT JOIN 
+                branch_account ba ON t.BRANCH_ACCOUNT_ID = ba.BRANCH_ACCOUNT_ID
+              LEFT JOIN 
+                branch_details bd ON ba.BRANCH_ID = bd.BRANCH_OFFICE_ID
+              ORDER BY 
+                t.CREATED_AT DESC";
+
                                                 $result = mysqli_query($conn, $query);
                                                 $sno = 1;
 
                                                 if ($result && mysqli_num_rows($result) > 0) {
                                                     while ($row = mysqli_fetch_assoc($result)) {
-                                                        // First query to get BRANCH_ID
-                                                        $branchIdQuery = "SELECT BRANCH_ID FROM branch_account WHERE BRANCH_ACCOUNT_ID = " . $row['BRANCH_ACCOUNT_ID'];
-                                                        $branchIdResult = mysqli_query($conn, $branchIdQuery);
-                                                        $branchId = '';
-
-                                                        if ($branchIdResult && mysqli_num_rows($branchIdResult) > 0) {
-                                                            $branchIdRow = mysqli_fetch_assoc($branchIdResult);
-                                                            $branchId = $branchIdRow['BRANCH_ID'];
-
-                                                            // Second query to get branch name
-                                                            $branchNameQuery = "SELECT * FROM branch_details WHERE BRANCH_OFFICE_ID = " . $branchId;
-                                                            $branchNameResult = mysqli_query($conn, $branchNameQuery);
-                                                            $branchName = 'N/A';
-
-                                                            if ($branchNameResult && mysqli_num_rows($branchNameResult) > 0) {
-                                                                $branchNameRow = mysqli_fetch_assoc($branchNameResult);
-                                                                $branchName = htmlspecialchars($branchNameRow['BRANCH_NAME'] ?? 'N/A');
-                                                            }
-                                                        }
-
                                                         echo "<tr class='text-center'>";
                                                         echo "<td>" . $sno++ . "</td>";
                                                         echo "<td>" . strtolower(date('d-M-Y', strtotime($row['CREATED_AT']))) . "</td>";
-                                                        echo "<td>" . $branchName .  "</td>" ?? '-';
+                                                        echo "<td>" . htmlspecialchars($row['BRANCH_NAME'] ?? 'N/A') . "</td>";
                                                         echo "<td>" . htmlspecialchars($row['REQUEST_AMOUNT'] ?? '-') . "</td>";
                                                         echo "<td>" . htmlspecialchars($row['PAYMENT_TYPE'] ?? '-') . "</td>";
                                                         echo "<td>" . htmlspecialchars($row['NOTES'] ?? '-') . "</td>";
