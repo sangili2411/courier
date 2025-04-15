@@ -74,6 +74,49 @@ if (strtolower($userName) == 'admin') {
 	$shipingDetailsSql = $shipingDetailsSql . " AND FROM_PLACE = '$branchName' ";
 }
 $shipingDetailsSql = $shipingDetailsSql . " ORDER BY BOOKING_DATE DESC";
+
+
+
+
+$currentMonth = date('m');
+$currentYear = date('Y');
+
+// ---------------- Booking Count ----------------
+$sql1 = "SELECT PAYMENT_TYPE, COUNT(*) as count FROM booking_details WHERE MONTH(BOOKING_DATE) = ? AND YEAR(BOOKING_DATE) = ? GROUP BY PAYMENT_TYPE";
+$stmt1 = $conn->prepare($sql1);
+$stmt1->bind_param("ss", $currentMonth, $currentYear);
+$stmt1->execute();
+$result1 = $stmt1->get_result();
+
+$countPaid = $countToPay = $countAccount = 0;
+while ($row = $result1->fetch_assoc()) {
+    switch (strtolower($row['PAYMENT_TYPE'])) {
+        case 'paid': $countPaid = $row['count']; break;
+        case 'to pay': $countToPay = $row['count']; break;
+        case 'account': $countAccount = $row['count']; break;
+    }
+}
+$stmt1->close();
+
+// ---------------- Total Amount ----------------
+$sql2 = "SELECT PAYMENT_TYPE, SUM(TOTAL_AMOUNT) as total FROM booking_details WHERE MONTH(BOOKING_DATE) = ? AND YEAR(BOOKING_DATE) = ? GROUP BY PAYMENT_TYPE";
+$stmt2 = $conn->prepare($sql2);
+$stmt2->bind_param("ss", $currentMonth, $currentYear);
+$stmt2->execute();
+$result2 = $stmt2->get_result();
+
+$amountPaid = $amountToPay = $amountAccount = 0;
+while ($row = $result2->fetch_assoc()) {
+    switch (strtolower($row['PAYMENT_TYPE'])) {
+        case 'paid': $amountPaid = $row['total']; break;
+        case 'to pay': $amountToPay = $row['total']; break;
+        case 'account': $amountAccount = $row['total']; break;
+    }
+}
+$stmt2->close();
+$conn->close();
+
+
 ?>
 
 <!DOCTYPE html>
@@ -161,6 +204,98 @@ function formatToIndianCurrency($amount)
                
                 </div>
 
+                <div class="row">
+                    <div class="col-lg-6 col-sm-6">
+                        <div class="card">
+                            <div class="card-body">
+
+                                <title>Booking Payment Type - Horizontal Bar</title>
+                                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                                </head>
+
+                                <body>
+                                    <h3>Payment Type Summary - <?php echo date("F Y"); ?></h3>
+                                    <canvas id="barChart" width="600" height="400"></canvas>
+
+                                    <script>
+                                        const barCtx = document.getElementById('barChart').getContext('2d');
+                                        const barChart = new Chart(barCtx, {
+                                            type: 'bar',
+                                            data: {
+                                                labels: ['Paid', 'To Pay', 'Account'],
+                                                datasets: [{
+                                                    label: 'No. of Bookings',
+                                                    data: [
+                                                        <?php echo $countPaid; ?>,
+                                                        <?php echo $countToPay; ?>,
+                                                        <?php echo $countAccount; ?>
+                                                    ],
+                                                    backgroundColor: ['#4CAF50', '#FFC107', '#2196F3']
+                                                }]
+                                            },
+                                            options: {
+                                                indexAxis: 'y', // 👉 this makes it horizontal
+                                                responsive: true,
+                                                scales: {
+                                                    x: {
+                                                        beginAtZero: true
+                                                    }
+                                                }
+                                            }
+                                        });
+                                    </script>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-sm-4">
+                        <div class="card">
+                            <div class="card-body">
+
+                                <title>Booking Payment Type - Pie chart</title>
+
+                                <h3>Total Amount - <?php echo date("F Y"); ?></h3>
+                                <canvas id="pieChart" width="100" height="100"></canvas>
+                                <script>
+                                    const pieCtx = document.getElementById('pieChart').getContext('2d');
+                                    const pieChart = new Chart(pieCtx, {
+                                        type: 'pie',
+                                        data: {
+                                            labels: ['Paid', 'To Pay', 'Account'],
+                                            datasets: [{
+                                                label: 'Total Amount (₹)',
+                                                data: [
+                                                    <?php echo $amountPaid ?? 0; ?>,
+                                                    <?php echo $amountToPay ?? 0; ?>,
+                                                    <?php echo $amountAccount ?? 0; ?>
+                                                ],
+                                                backgroundColor: ['#4CAF50', '#FFC107', '#2196F3'],
+                                                hoverOffset: 10
+                                            }]
+                                        },
+                                        options: {
+                                            responsive: true,
+                                            plugins: {
+                                                tooltip: {
+                                                    callbacks: {
+                                                        label: function(context) {
+                                                            const value = context.parsed || 0;
+                                                            return `${context.label}: ₹${value.toLocaleString('en-IN')}`;
+                                                        }
+                                                    }
+                                                },
+                                                legend: {
+                                                    position: 'bottom'
+                                                }
+                                            }
+                                        }
+                                    });
+                                </script>
+
+                            </div>
+                        </div>
+                    </div>
+                    </div>
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="card">
