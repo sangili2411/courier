@@ -1,0 +1,109 @@
+table {
+    max-height: 80%;
+}
+
+.fa {
+    font-size: x-large !important;
+}
+
+td {
+    color: black !important;
+}
+
+span.select2.select2-container.select2-container--default {
+    width: 100% !important;
+}
+
+/* General styling for select2 dropdown */
+.select2-dropdown .select2-selection__rendered {
+    background: white;
+    /* White background for the "Description Status" select2 */
+    color: black !important;
+    /* Black text color */
+}
+
+.select2-dropdown .select2-selection {
+    border: 1px solid #ddd !important;
+    /* Light border for the dropdown */
+    background-color: white !important;
+    /* White dropdown background */
+}
+
+/* Specific styling for table header select2 elements */
+.tableFixHead .select2-selection__rendered {
+    background: #7676ff;
+    /* Blue background for table header select2 */
+    color: white !important;
+    /* White text for contrast */
+}
+
+.tableFixHead .select2-selection {
+    border: aliceblue !important;
+    /* Light blue border */
+    background-color: #7676ff !important;
+    /* Blue dropdown background */
+}
+
+.tableFixHead .select2-selection__rendered {
+    background: #7676ff;
+    border-bottom: 1px solid #5796cd !important;
+    border-color: #7676ff;
+    color: white !important;
+}
+
+.tableFixHead .select2-selection {
+    border: aliceblue !important;
+}
+
+.select2-results__option {
+    background: white;
+}
+
+select {
+    background: #7676ff;
+    border-bottom: 1px solid #5796cd !important;
+    border-color: #7676ff;
+}
+
+option {
+    background: white;
+}
+
+.table-container {
+    max-height: 80%;
+    /* Set the height of the container to the full viewport height */
+    overflow-y: auto !important;
+    /* Add scroll if the table exceeds the container height */
+}
+
+/* FOR TABLE FIXED HEADER */
+.tableFixHead {
+    overflow-y: auto;
+    max-height: 400px;
+}
+
+.tableFixHead table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.tableFixHead th,
+.tableFixHead td {
+    padding: 8px 16px;
+}
+
+.tableFixHead th {
+    position: sticky;
+    top: 0;
+}
+
+.max-30 {
+    max-height: 30em;
+}
+
+th,td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    white-space: nowrap;
+    /* Prevents text wrapping */
+}

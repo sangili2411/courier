@@ -1,0 +1,53 @@
+.m-42 {
+    margin-left: 42%;
+}
+
+.m-t-4 {
+    margin-top: 4%;
+}
+
+.add-border-bottom {
+    border-bottom: 1px solid #78cc0c;
+    max-width: 98%;
+    margin-left: 1% !important;
+}
+
+.panel {
+    color: black;
+}
+
+.bdr-btm {
+    border-bottom: 1px solid red;
+    max-width: 98%;
+    margin-left: 1% !important;
+}
+
+.bdr-btm-orange {
+    border-bottom: 1px solid #ff8400;
+    width: 98% !important;
+    margin-left: 1% !important;
+}
+
+.panel-body {
+    margin-top: 1.5%;
+}
+
+.t-1-5 {
+    margin-top: 1.5%;
+}
+
+.select2-container {
+    width: 100% !important;
+}
+
+.top-1 {
+    margin-top: 1%;
+}
+
+.top-2 {
+    margin-top: 2%;
+}
+
+.hide {
+    display: none;
+}
