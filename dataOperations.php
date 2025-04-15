@@ -467,30 +467,28 @@ if (isset($_POST['editItem'])) {
     $ItemId = $_POST['ItemId'];
     $ItemName = $_POST['ItemName'];
 
-    $checkQuery = "SELECT ITEM_NAME FROM items WHERE ITEM_NAME = ? AND ITEM_ID != ?";
-    $stmt = mysqli_prepare($conn, $checkQuery);
-    mysqli_stmt_bind_param($stmt, "si", $name, $Itemid); // 's' = string, 'i' = integer
-    mysqli_stmt_execute($stmt);
-    $checkResult = mysqli_stmt_get_result($stmt);
+    $selectCondition = array(
+        "ITEM_NAME" => $ItemName
+    );
 
-    if (mysqli_num_rows($checkResult) > 0) {
-        echo "ITEM_ALREADY_EXISTS";
-    } else {
-        $updateQuery = "UPDATE items SET ITEM_NAME = ? WHERE ITEM_ID = ?";
-        $updateStmt = mysqli_prepare($conn, $updateQuery);
-        mysqli_stmt_bind_param($updateStmt, "si", $ItemName, $ItemId); // two strings and one integer
+    $jsonString = $dbOperator->selectQueryToJson("items", "ITEM_NAME", $selectCondition);
+    $resultArray = json_decode($jsonString);
+    $rowCount = count($resultArray);
 
-        if (mysqli_stmt_execute($updateStmt)) {
-            echo "UPDATE_SUCCESSFUL";
-        } else {
-            echo "ERROR_UPDATING_CUSTOMER: " . mysqli_error($conn);
-        }
+   
+    
+        $conditions = array(
+            "ITEM_ID" => $ItemId
+        );
 
-        mysqli_stmt_close($updateStmt);
-    }
+        $data = array(
+            "ITEM_NAME" => $ItemName
+        );
 
-    mysqli_stmt_close($stmt);
+        echo $dbOperator->updateData("items", $data, $conditions);
+    
 }
+
 
 
 //delete Item

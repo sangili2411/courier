@@ -235,7 +235,7 @@ include 'dbConn.php';
                 success: function(response) {
                     console.log("Response from server:", response);
 
-                    if (response.toString().startsWith("UPDATE_SUCCESSFUL")) {
+                    if (response.toString().startsWith("Update Successful")) {
                         alert('✔️ Item Updated Successfully!');
                         $('#editItemModal').modal('hide'); // Corrected modal ID
                         window.location.reload();
