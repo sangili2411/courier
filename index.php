@@ -14,46 +14,46 @@ $whereSql = "";
 $userName = $_SESSION['userName'] ?? null;
 $branchName = $_SESSION['admin'] ?? null;
 if (strtolower($userName) == strtolower('admin')) {
-	// Nothing
+    // Nothing
 } else {
-	$whereSql = " AND FROM_PLACE = '$branchName' ";
+    $whereSql = " AND FROM_PLACE = '$branchName' ";
 }
 
 $bookingCount = 0;
-$bookingCountSql = "SELECT COUNT(*) AS CNT FROM booking_details WHERE BOOKING_DATE AND IS_DELETE=0 BETWEEN '$firstDay' AND '$lastDay'";
+$bookingCountSql = "SELECT COUNT(*) AS CNT FROM booking_details WHERE BOOKING_DATE BETWEEN '$firstDay' AND '$lastDay'";
 // $bookingCountSql = "SELECT COUNT(*) AS CNT FROM booking_details WHERE BOOKING_DATE BETWEEN CURDATE() - INTERVAL 30 DAY AND CURDATE()";
 if (!empty($whereSql)) {
-	$bookingCountSql = $bookingCountSql . $whereSql;
+    $bookingCountSql = $bookingCountSql . $whereSql;
 }
 // echo $bookingCountSql;
 if ($result = mysqli_query($conn, $bookingCountSql)) {
-	if (mysqli_num_rows($result) > 0) {
-		while ($row = mysqli_fetch_array($result)) {
-			$bookingCount = $row['CNT'];
-		}
-	}
+    if (mysqli_num_rows($result) > 0) {
+        while ($row = mysqli_fetch_array($result)) {
+            $bookingCount = $row['CNT'];
+        }
+    }
 }
 
 $totalAmount = 0;
 $totalAmountSql = "SELECT SUM(TOTAL_AMOUNT) AS TOTAL_AMOUNT FROM booking_details WHERE BOOKING_DATE BETWEEN '$firstDay' AND '$lastDay'";
 if (empty($whereSql)) {
-	// Nothing
+    // Nothing
 } else {
-	$totalAmountSql = $totalAmountSql . $whereSql;
+    $totalAmountSql = $totalAmountSql . $whereSql;
 }
 // echo $bookingCountSql;
 if ($result = mysqli_query($conn, $totalAmountSql)) {
-	if (mysqli_num_rows($result) > 0) {
-		while ($row = mysqli_fetch_array($result)) {
-			$totalAmount = $row['TOTAL_AMOUNT'];
-		}
-	}
+    if (mysqli_num_rows($result) > 0) {
+        while ($row = mysqli_fetch_array($result)) {
+            $totalAmount = $row['TOTAL_AMOUNT'];
+        }
+    }
 }
 if (empty($totalAmount)) {
     $totalAmount = 0;
 }
 
-$shipingDetailsSql = "SELECT BD.BOOKING_ID, BD.CUSTOMER, BD.LR_NUMBER, 
+$shipingDetailsSql = "SELECT BD.BOOKING_ID, BD.CUSTOMER, BD.INVOICE_NUMBER, 
 						BD.BOOKING_DATE, BD.FROM_PLACE, BD.TO_PLACE,
 						CASE
 							WHEN BD.BOOKING_STAUTS = 0 THEN 'Booked/Ready To Ship'
@@ -62,20 +62,15 @@ $shipingDetailsSql = "SELECT BD.BOOKING_ID, BD.CUSTOMER, BD.LR_NUMBER,
 							WHEN BD.BOOKING_STAUTS = 3 THEN 'Delivered'
 						END AS BOOKING_STAUTS 
 						FROM booking_details BD
-						WHERE 1 = 1 AND IS_DELETE = 0
+						WHERE 1 = 1
 						AND BOOKING_DATE BETWEEN '$firstDay' AND '$lastDay'
 						-- AND BOOKING_DATE BETWEEN CURDATE() - INTERVAL 30 DAY AND CURDATE()
 						";
-                        
 if (strtolower($userName) == 'admin') {
-
-
 } else {
-	$shipingDetailsSql = $shipingDetailsSql . " AND FROM_PLACE = '$branchName' ";
+    $shipingDetailsSql = $shipingDetailsSql . " AND FROM_PLACE = '$branchName' ";
 }
 $shipingDetailsSql = $shipingDetailsSql . " ORDER BY BOOKING_DATE DESC";
-
-
 
 
 $currentMonth = date('m');
@@ -90,10 +85,16 @@ $result1 = $stmt1->get_result();
 
 $countPaid = $countToPay = $countAccount = 0;
 while ($row = $result1->fetch_assoc()) {
-    switch (strtolower($row['PAYMENT_TYPE'])) {
-        case 'paid': $countPaid = $row['count']; break;
-        case 'to pay': $countToPay = $row['count']; break;
-        case 'account': $countAccount = $row['count']; break;
+    switch (($row['PAYMENT_TYPE'])) {
+        case 'PAID':
+            $countPaid = $row['count'];
+            break;
+        case 'TO_PAY':
+            $countToPay = $row['count'];
+            break;
+        case 'ACCOUNT':
+            $countAccount = $row['count'];
+            break;
     }
 }
 $stmt1->close();
@@ -105,37 +106,74 @@ $stmt2->bind_param("ss", $currentMonth, $currentYear);
 $stmt2->execute();
 $result2 = $stmt2->get_result();
 
+
+
 $amountPaid = $amountToPay = $amountAccount = 0;
 while ($row = $result2->fetch_assoc()) {
-    switch (strtolower($row['PAYMENT_TYPE'])) {
-        case 'paid': $amountPaid = $row['total']; break;
-        case 'to pay': $amountToPay = $row['total']; break;
-        case 'account': $amountAccount = $row['total']; break;
+    switch (($row['PAYMENT_TYPE'])) {
+        case 'PAID':
+            $amountPaid = $row['total'];
+            break;
+        case 'TO_PAY':
+            $amountToPay = $row['total'];
+            break;
+        case 'ACCOUNT':
+            $amountAccount = $row['total'];
+            break;
     }
 }
 $stmt2->close();
 $conn->close();
-
-
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
 
-<?php
-function formatToIndianCurrency($amount)
-{
-    // Format the amount according to Indian currency format
-    return number_format($amount, 0, '.', ',');
-}
-?>
+
+
+
+
+
+
 
 <link rel="stylesheet" href="./css/table-filter.css">
-<style>
-    .fa {
-        font-size: xxx-large !important;
-    }
-</style>
+<script src="https://cdn.anychart.com/releases/v8/js/anychart-base.min.js"></script>
+
+<html>
+
+<head>
+    <style>
+        .fa {
+            font-size: xxx-large !important;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial;
+        }
+
+        #charts {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            padding: 20px;
+        }
+
+        .chart-container {
+            width: 45%;
+            height: 200px;
+        }
+
+        .chart-wrapper {
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+    </style>
+
+    </style>
+</head>
 
 <body>
 
@@ -159,8 +197,8 @@ function formatToIndianCurrency($amount)
     ***********************************-->
     <div id="main-wrapper">
 
-        <?php 
-        include 'header2.php';
+        <?php
+        include 'header.php';
         include 'dbConn.php';
         ?>
 
@@ -169,7 +207,7 @@ function formatToIndianCurrency($amount)
         ***********************************-->
 
 
-       
+
 
         <div class="content-body">
             <div class="container-fluid mt-3">
@@ -180,122 +218,127 @@ function formatToIndianCurrency($amount)
                                 <h3 class="card-title text-white">Booking</h3>
                                 <div class="d-inline-block">
                                     <h2 class="text-white"><?php echo $bookingCount; ?></h2>
-							<p>No of parcels <br>booked this month</p>
+                                    <p>No of parcels <br>booked this month</p>
 
                                 </div>
                                 <span class="float-right display-5 opacity-5"><i class="fa fa-shopping-cart"></i></span>
                             </div>
                         </div>
                     </div>
-                 
+
                     <div class="col-lg-6 col-sm-6">
                         <div class="card gradient-2">
                             <div class="card-body">
                                 <h3 class="card-title text-white">Amount</h3>
                                 <div class="d-inline-block">
                                     <h2 class="text-white"><?php echo $totalAmount; ?></h2>
-							<p>Total Revenue <br>generated this month</p>
+                                    <p>Total Revenue <br>generated this month</p>
 
                                 </div>
                                 <span class="float-right display-5 opacity-5"><i class="fa fa-money"></i></span>
                             </div>
                         </div>
                     </div>
-               
+
                 </div>
 
+
                 <div class="row">
-                    <div class="col-lg-6 col-sm-6">
+                    <div class="col-sm-6">
                         <div class="card">
                             <div class="card-body">
 
-                                <title>Booking Payment Type - Horizontal Bar</title>
-                                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-                                </head>
-
-                                <body>
-                                    <h3>Payment Type Summary - <?php echo date("F Y"); ?></h3>
-                                    <canvas id="barChart" width="600" height="400"></canvas>
+                                <h3 style="text-align:center;">Total Booking Amount </h3>
+                                <div id="charts">
+                                    <div id="pieChart" class="chart-container" style="width: 90%; height: 300px;"></div>
 
                                     <script>
-                                        const barCtx = document.getElementById('barChart').getContext('2d');
-                                        const barChart = new Chart(barCtx, {
-                                            type: 'bar',
-                                            data: {
-                                                labels: ['Paid', 'To Pay', 'Account'],
-                                                datasets: [{
-                                                    label: 'No. of Bookings',
-                                                    data: [
-                                                        <?php echo $countPaid; ?>,
-                                                        <?php echo $countToPay; ?>,
-                                                        <?php echo $countAccount; ?>
-                                                    ],
-                                                    backgroundColor: ['#4CAF50', '#FFC107', '#2196F3']
-                                                }]
-                                            },
-                                            options: {
-                                                indexAxis: 'y', // 👉 this makes it horizontal
-                                                responsive: true,
-                                                scales: {
-                                                    x: {
-                                                        beginAtZero: true
-                                                    }
-                                                }
-                                            }
+                                        anychart.onDocumentReady(function() {
+                                            // --------- Pie Chart (Amount) ---------
+                                            var pieData = [
+                                                ["Paid", <?= $amountPaid ?>],
+                                                ["To Pay", <?= $amountToPay ?>],
+                                                ["Account", <?= $amountAccount ?>]
+                                            ];
+
+                                            var pieChart = anychart.pie(pieData);
+                                            pieChart.title("Total Amount by Payment Type");
+                                            pieChart.labels().format("₹{%Value}{groupsSeparator:','}");
+                                            pieChart.tooltip().format("Payment Type: {%X}\nAmount: ₹{%Value}{groupsSeparator:','}");
+                                            pieChart.container("pieChart");
+                                            pieChart.draw();
+                                            // Custom colors for the pie chart
+
+                                            pieChart.palette(["#4CAF50", "#FFC107", "#F44336"]); // Green, Yellow, Red
+
                                         });
                                     </script>
-
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-4 col-sm-4">
+
+
+
+                    <div class="col-sm-6">
                         <div class="card">
                             <div class="card-body">
+                                <h3 style="text-align:center;">Total Booking </h3>
 
-                                <title>Booking Payment Type - Pie chart</title>
+                                <!-- Chart container placed inside its own wrapper -->
+                                <div class="chart-wrapper">
+                                    <div id="barChartContainer" style="width: 90%; height: 310px;"></div>
+                                </div>
 
-                                <h3>Total Amount - <?php echo date("F Y"); ?></h3>
-                                <canvas id="pieChart" width="100" height="100"></canvas>
                                 <script>
-                                    const pieCtx = document.getElementById('pieChart').getContext('2d');
-                                    const pieChart = new Chart(pieCtx, {
-                                        type: 'pie',
-                                        data: {
-                                            labels: ['Paid', 'To Pay', 'Account'],
-                                            datasets: [{
-                                                label: 'Total Amount (₹)',
-                                                data: [
-                                                    <?php echo $amountPaid ?? 0; ?>,
-                                                    <?php echo $amountToPay ?? 0; ?>,
-                                                    <?php echo $amountAccount ?? 0; ?>
-                                                ],
-                                                backgroundColor: ['#4CAF50', '#FFC107', '#2196F3'],
-                                                hoverOffset: 10
-                                            }]
+                                    // --------- Horizontal Bar Chart (Booking Count) ---------
+                                    var barData = [{
+                                            x: "PAID",
+                                            value: <?= $countPaid ?>,
+                                            normal: {
+                                                fill: "#E91E63" // Pink
+                                            }
                                         },
-                                        options: {
-                                            responsive: true,
-                                            plugins: {
-                                                tooltip: {
-                                                    callbacks: {
-                                                        label: function(context) {
-                                                            const value = context.parsed || 0;
-                                                            return `${context.label}: ₹${value.toLocaleString('en-IN')}`;
-                                                        }
-                                                    }
-                                                },
-                                                legend: {
-                                                    position: 'bottom'
-                                                }
+                                        {
+                                            x: "To Pay",
+                                            value: <?= $countToPay ?>,
+                                            normal: {
+                                                fill: "#FFC107" // Amber
+                                            }
+                                        },
+                                        {
+                                            x: "Account",
+                                            value: <?= $countAccount ?>,
+                                            normal: {
+                                                fill: "#3F51B5" // Indigo
                                             }
                                         }
-                                    });
+                                    ];
+
+                                    var barChart = anychart.bar(); // Horizontal bar chart
+                                    barChart.data(barData);
+                                    barChart.title("Booking Count by Payment Type");
+
+                                    // Axis labels
+                                    barChart.xAxis().title("Payment Type");
+                                    barChart.yAxis().title("Number of Bookings");
+
+                                    // Bar labels & tooltip
+                                    barChart.labels().enabled(true);
+                                    barChart.labels().format("{%Value}");
+                                    barChart.tooltip().format("Type: {%X}\nCount: {%Value}");
+
+                                    // Use the container
+                                    barChart.container("barChartContainer");
+                                    barChart.draw();
                                 </script>
 
                             </div>
                         </div>
                     </div>
-                    </div>
+
+                </div>
+
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="card">
@@ -303,86 +346,88 @@ function formatToIndianCurrency($amount)
                                 <div class="active-member" style="text-align: center;">
                                     <h4>Booking Details</h4>
                                     <div class="agileits-box-body clearfix">
-									<?php
-									if ($result = mysqli_query($conn, $shipingDetailsSql)) {
-										if (mysqli_num_rows($result) > 0) {
-									?>
-											<div class="table-responsive" style="max-height: 25em;">
-												<table id="data-table" class="table tableFixHead table-striped">
-													<thead>
-														<tr style="color:#0c1211" ;>
-															<th style="color:#0c1211" ;>S.No</th>
-															<th style="color:#0c1211" ;>LR No</th>
-															<th style="color:#0c1211" ;>Date</th>
-															<th style="color:#0c1211" ;>Customer Name</th>
-															<th style="color:#0c1211" ;>From&nbsp;Branch</th>
-															<th style="color:#0c1211" ;>To&nbsp;Branch</th>
-															<!-- <th style="color:#0c1211" ;>Driver</th>
+                                        <?php
+                                        if ($result = mysqli_query($conn, $shipingDetailsSql)) {
+                                            if (mysqli_num_rows($result) > 0) {
+                                        ?>
+                                                <div class="table-responsive" style="max-height: 25em;">
+                                                    <table id="data-table" class="table tableFixHead table-striped">
+                                                        <thead>
+                                                            <tr style="color:#0c1211" ;>
+                                                                <th style="color:#0c1211" ;>S.No</th>
+                                                                <th style="color:#0c1211" ;>Invoice No</th>
+                                                                <th style="color:#0c1211" ;>Date</th>
+                                                                <th style="color:#0c1211" ;>Customer Name</th>
+                                                                <th style="color:#0c1211" ;>From&nbsp;Branch</th>
+                                                                <th style="color:#0c1211" ;>To&nbsp;Branch</th>
+                                                                <!-- <th style="color:#0c1211" ;>Driver</th>
 															<th style="color:#0c1211" ;>Driver&nbsp;Mobile</th> -->
-															<th style="color:#0c1211" ;>Status</th>
-														</tr>
-													</thead>
-													<?php
-													$i = 0;
-													while ($row = mysqli_fetch_array($result)) {
-														$i++;
-													?>
-														<tbody>
-															<tr id="account-id-<?php echo $row['BOOKING_ID']; ?>">
-																<td style="color:#0c1211" ;>
-																	<?php echo $i; ?>
-																</td>
-																<td style="color:#0c1211" ; id="custName-<?php echo $row['BOOKING_ID']; ?>">
-																	<a data-toggle="modal" class="refNo-info" id="refNo-<?php echo $row['BOOKING_ID']; ?>" href="">
-																		<?php echo $row['LR_NUMBER'] ?? "NO LR NUMBER"; ?>
-																	</a>
-																</td>
-																<td style="color:#0c1211" ;><?php echo $row['BOOKING_DATE'] ?></td>
-																<td style="color:#0c1211" ;><?php echo $row['CUSTOMER'] ?></td>
-																<td style="color:#0c1211" ;><?php echo $row['FROM_PLACE'] ?></td>
-																<td style="color:#0c1211" ;><?php echo $row['TO_PLACE'] ?></td>
-																<!-- <td style="color:#0c1211" ;><?php echo $row['DRIVER_NAME'] ?></td>
+                                                                <th style="color:#0c1211" ;>Status</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <?php
+                                                        $i = 0;
+                                                        while ($row = mysqli_fetch_array($result)) {
+                                                            $i++;
+                                                        ?>
+                                                            <tbody>
+                                                                <tr id="account-id-<?php echo $row['BOOKING_ID']; ?>">
+                                                                    <td style="color:#0c1211" ;>
+                                                                        <?php echo $i; ?>
+                                                                    </td>
+                                                                    <td style="color:#0c1211" ; id="custName-<?php echo $row['BOOKING_ID']; ?>">
+                                                                        <a data-toggle="modal" class="refNo-info" id="refNo-<?php echo $row['BOOKING_ID']; ?>" href="">
+                                                                            <?php echo $row['INVOICE_NUMBER'] ?>
+                                                                        </a>
+                                                                    </td>
+                                                                    <td style="color:#0c1211" ;><?php echo $row['BOOKING_DATE'] ?></td>
+                                                                    <td style="color:#0c1211" ;><?php echo $row['CUSTOMER'] ?></td>
+                                                                    <td style="color:#0c1211" ;><?php echo $row['FROM_PLACE'] ?></td>
+                                                                    <td style="color:#0c1211" ;><?php echo $row['TO_PLACE'] ?></td>
+                                                                    <!-- <td style="color:#0c1211" ;><?php echo $row['DRIVER_NAME'] ?></td>
 																<td style="color:#0c1211" ;><?php echo $row['DRIVER_MOBILE'] ?></td> -->
-																<td style="color:#0c1211" ;><?php echo $row['BOOKING_STAUTS'] ?></td>
-															</tr>
-														</tbody>
-													<?php
-													}
-													?>
-												</table>
-										<?php
-											mysqli_free_result($result);
-										} else {
-											echo "No records found.";
-										}
-									}
-										?>
-											</div>
-								</div>
+                                                                    <td style="color:#0c1211" ;><?php echo $row['BOOKING_STAUTS'] ?></td>
+                                                                </tr>
+                                                            </tbody>
+                                                        <?php
+                                                        }
+                                                        ?>
+                                                    </table>
+                                            <?php
+                                                mysqli_free_result($result);
+                                            } else {
+                                                echo "No records found.";
+                                            }
+                                        }
+                                            ?>
+                                                </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
                     </div>
                 </div>
-
             </div>
-            <!-- #/ container -->
+
         </div>
-        <!--**********************************
+        <!-- #/ container -->
+    </div>
+    <!--**********************************
             Content body end
         ***********************************-->
 
 
-        <!--**********************************
+    <!--**********************************
             Footer start
         ***********************************-->
-        <div class="footer">
-            <div class="copyright">
-                <p>Copyright &copy; Designed & Developed by <a href="#">ZENITH</a>
-                    2024</p>
-            </div>
+    <div class="footer">
+        <div class="copyright">
+            <p>Copyright &copy; Designed & Developed by <a href="#">ZENITH</a>
+                2024</p>
         </div>
-        <!--**********************************
+    </div>
+    <!--**********************************
             Footer end
         ***********************************-->
     </div>
@@ -424,276 +469,7 @@ function formatToIndianCurrency($amount)
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <!-- Table Filter -->
     <script src="./js/ddtf.js"></script>
-<script>
-		var buildTable = function(sizeArray) {
-			var columns = addAllColumnHeaders(sizeArray);
-			for (var i = 0; i < sizeArray.length; i++) {
-				var row$ = $('<tr/>');
-				for (var colIndex = 0; colIndex < columns.length; colIndex++) {
-					var cellValue = sizeArray[i][columns[colIndex]];
 
-					if (cellValue == null) {
-						cellValue = "";
-					}
-
-					row$.append($('<td/>').html(cellValue));
-				}
-				$("#report-table").append(row$);
-			}
-		}
-
-		var addAllColumnHeaders = function(sizeArray) {
-			var columnSet = [];
-			var headerTr$ = $('<tr/>');
-
-			for (var i = 0; i < sizeArray.length; i++) {
-				var rowHash = sizeArray[i];
-				for (var key in rowHash) {
-					if ($.inArray(key, columnSet) == -1) {
-						columnSet.push(key);
-						headerTr$.append($('<th/>').html(key));
-					}
-				}
-			}
-
-			$("#report-table").append(headerTr$);
-			return columnSet;
-		};
-
-		$(document).ready(function() {
-			let userType = <?php echo "'" . $_SESSION['admin'] . "'"; ?>;
-			console.log('userType: ' + userType);
-			let userName = <?php echo "'" . $_SESSION['admin'] . "'"; ?>;
-
-			$("#data-table").ddTableFilter();
-			$('select').addClass('w3-select');
-			$('select').select2();
-
-			$('.refNo-info').click(function() {
-				var id = this.id;
-				var splitid = id.split('-');
-				var samplePiId = splitid[1];
-                console.log("samplePiId: ", samplePiId);
-				// AJAX request
-				$.ajax({
-					// url: 'account_transaction.php',
-                    url:'dataOperations.php',
-					type: 'post',
-					data: {
-                        getBookingDetails:1,
-						samplePiId: samplePiId
-					},
-					success: function(response) {
-						console.log(response);
-						$("#modal-title").html('');
-						$("#report-table tr").detach();
-						let res = JSON.parse(response);
-						console.log(res[1]);
-						res = res[0][0];
-						$("#modal-title-refNo").html(res["REFERENCE_NO"]);
-
-						$("#customer-name").val(res["CUSTOMER_NAME"]);
-						$("#customer-mobile").val(res["MOBILE"]);
-						$("#customer-date").val(res["DATE"]);
-						$("#customer-productAmount").val(res["PRODUCT_AMOUNT"]);
-						$("#customer-gstAmount").val(res["GST_AMOUNT"]);
-						$("#customer-total").val(res["TOTAL_AMOUNT"]);
-						$("#customer-advance").val(res["ADVANCE"]);
-						$("#customer-balance").val(res["BALANCE"]);
-
-						// Display Modal
-						$('#refNo-modal').modal('show');
-					}
-				});
-			});
-
-			$('.transaction-info').click(function() {
-				var id = this.id;
-				var splitid = id.split('-');
-				var userid = splitid[1];
-
-				// AJAX request
-				$.ajax({
-					url: 'account_transaction.php',
-					type: 'post',
-					data: {
-						userid: userid
-					},
-					success: function(response) {
-						// Add response in Modal body
-						$("#modal-title").html('');
-						$("#report-table tr").detach();
-						let res = JSON.parse(response);
-						$("#modal-title").html($("#custName-" + res[1]).text());
-						console.log(res[1]);
-						buildTable(res[0]);
-
-						// Display Modal
-						$('#myModal').modal('show');
-					}
-				});
-			});
-
-			$('.color-condition').each(function() {
-				var $this = $(this);
-				var value = $this.text().trim();
-				if (value == "Pending") {
-					$(this).children().removeClass("fa-check").addClass("fa-times");
-					$this.addClass('red');
-				} else {
-
-				}
-				console.log(value);
-			});
-
-
-			//BOX BUTTON SHOW AND CLOSE
-			jQuery('.small-graph-box').hover(function() {
-				jQuery(this).find('.box-button').fadeIn('fast');
-			}, function() {
-				jQuery(this).find('.box-button').fadeOut('fast');
-			});
-			jQuery('.small-graph-box .box-close').click(function() {
-				jQuery(this).closest('.small-graph-box').fadeOut(200);
-				return false;
-			});
-
-			//CHARTS
-			function gd(year, day, month) {
-				return new Date(year, month - 1, day).getTime();
-			}
-
-			graphArea2 = Morris.Area({
-				element: 'hero-area',
-				padding: 10,
-				behaveLikeLine: true,
-				gridEnabled: false,
-				gridLineColor: '#dddddd',
-				axes: true,
-				resize: true,
-				smooth: true,
-				pointSize: 0,
-				lineWidth: 0,
-				fillOpacity: 0.85,
-				data: [{
-						period: '2015 Q1',
-						iphone: 2668,
-						ipad: null,
-						itouch: 2649
-					},
-					{
-						period: '2015 Q2',
-						iphone: 15780,
-						ipad: 13799,
-						itouch: 12051
-					},
-					{
-						period: '2015 Q3',
-						iphone: 12920,
-						ipad: 10975,
-						itouch: 9910
-					},
-					{
-						period: '2015 Q4',
-						iphone: 8770,
-						ipad: 6600,
-						itouch: 6695
-					},
-					{
-						period: '2016 Q1',
-						iphone: 10820,
-						ipad: 10924,
-						itouch: 12300
-					},
-					{
-						period: '2016 Q2',
-						iphone: 9680,
-						ipad: 9010,
-						itouch: 7891
-					},
-					{
-						period: '2016 Q3',
-						iphone: 4830,
-						ipad: 3805,
-						itouch: 1598
-					},
-					{
-						period: '2016 Q4',
-						iphone: 15083,
-						ipad: 8977,
-						itouch: 5185
-					},
-					{
-						period: '2017 Q1',
-						iphone: 10697,
-						ipad: 4470,
-						itouch: 2038
-					},
-
-				],
-				lineColors: ['#eb6f6f', '#926383', '#eb6f6f'],
-				xkey: 'period',
-				redraw: true,
-				ykeys: ['iphone', 'ipad', 'itouch'],
-				labels: ['All Visitors', 'Returning Visitors', 'Unique Visitors'],
-				pointSize: 2,
-				hideHover: 'auto',
-				resize: true
-			});
-		});
-	</script>
-	<!-- calendar -->
-	<script type="text/javascript" src="js/monthly.js"></script>
-	<script type="text/javascript">
-		var deleteQuotation = function(span) {
-			if ($(span).hasClass("quo-0")) {
-				return false;
-			} else {
-				console.log("quotationId: ", span);
-				$.ajax({
-					type: 'post',
-					url: 'index_backend.php',
-					data: {
-						quotationId: $(span).attr("data-quoId")
-					},
-					success: function(response) {
-						$("#quotation-" + $(span).attr("data-quoId")).hide();
-					}
-				});
-			}
-
-		};
-
-		$(window).load(function() {
-			// var $table = $('table.max-10');
-			// $table.floatThead();
-
-			$('#mycalendar').monthly({
-				mode: 'event',
-
-			});
-
-			$('#mycalendar2').monthly({
-				mode: 'picker',
-				target: '#mytarget',
-				setWidth: '250px',
-				startHidden: true,
-				showTrigger: '#mytarget',
-				stylePast: true,
-				disablePast: true
-			});
-
-			switch (window.location.protocol) {
-				case 'http:':
-				case 'https:':
-					// running on a server, should be good.
-					break;
-				case 'file:':
-					alert('Just a heads-up, events will not work when run locally.');
-			}
-
-		});
-	</script>
     <script>
         $(document).ready(function() {
             $("table").ddTableFilter();
