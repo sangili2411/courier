@@ -51,11 +51,7 @@ include 'dbConn.php';
                                         <div class="col-sm-10">
                                             <h2 class="m-50 m-t-p5">Items</h2>
                                         </div>
-                                        <div class="col-sm-2">
-                                            <button type="button" class="btn btn-success pull-right m-t-p5" onclick="window.location.href='#'">
-                                                <i class="fa fa-plus" aria-hidden="true" style="font-size: medium !important;"></i>
-                                            </button>
-                                        </div>
+                                       
                                     </div>
                                     <div class="form-group">
                                         <label for="member-name">Item Name: <span class="mandatory-astrick">*</span></label>

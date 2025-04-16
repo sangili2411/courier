@@ -1,38 +1,12 @@
 <?php
-session_start();
+
 include 'dbConn.php';
 
 date_default_timezone_set('Asia/Kolkata');
 $date_1 = date('d-m-Y H:i');
 $date = date('Y-m-d', strtotime($date_1));
 
-$sql = "SELECT BD.BOOKING_ID, BD.BOOKING_DATE, BD.CUSTOMER, BD.LR_NUMBER, BD.FROM_PLACE, BD.TO_PLACE,
-        BD.BOOKING_ID, BD.PAYMENT_TYPE, BD.QUANTITY, BD.TOTAL_AMOUNT,
-        CASE
-            WHEN BD.BOOKING_STAUTS = 0 THEN 'Booked/Ready To Ship'
-            WHEN BD.BOOKING_STAUTS = 1 THEN 'Ship Inward'
-            WHEN BD.BOOKING_STAUTS = 2 THEN 'Delivered'
-            WHEN BD.BOOKING_STAUTS = 3 THEN 'Delivered'
-        END AS BOOKING_STAUTS
-        FROM booking_details BD";
 
-$userName = $_SESSION['userName'] ?? 'GEST';
-$branchName = $_SESSION['admin'] ?? 'GETS';
-
-// Initialize WHERE clause
-$whereClauses = ["BD.IS_DELETE = 0"];
-
-// Check user permissions
-if (strtolower($userName) !== 'admin') {
-    $whereClauses[] = "BD.FROM_PLACE = '$branchName'";
-}
-
-// Join WHERE clauses if any
-if (!empty($whereClauses)) {
-    $sql .= " WHERE " . implode(" AND ", $whereClauses);
-}
-
-$sql .= " ORDER BY BD.BOOKING_ID DESC";
 ?>
 
 <!DOCTYPE html>
@@ -66,7 +40,38 @@ $sql .= " ORDER BY BD.BOOKING_ID DESC";
     <div id="main-wrapper">
 
         <?php
-        include 'header2.php';
+        include 'header.php';
+
+
+
+
+        $sql = "SELECT BD.BOOKING_ID, BD.BOOKING_DATE, BD.CUSTOMER, BD.LR_NUMBER, BD.FROM_PLACE, BD.TO_PLACE,
+        BD.BOOKING_ID, BD.PAYMENT_TYPE, BD.QUANTITY, BD.TOTAL_AMOUNT,
+        CASE
+            WHEN BD.BOOKING_STAUTS = 0 THEN 'Booked/Ready To Ship'
+            WHEN BD.BOOKING_STAUTS = 1 THEN 'Ship Inward'
+            WHEN BD.BOOKING_STAUTS = 2 THEN 'Delivered'
+            WHEN BD.BOOKING_STAUTS = 3 THEN 'Delivered'
+        END AS BOOKING_STAUTS
+        FROM booking_details BD";
+
+$userName = $_SESSION['userName'] ?? 'GEST';
+$branchName = $_SESSION['admin'] ?? 'GETS';
+
+// Initialize WHERE clause
+$whereClauses = ["BD.IS_DELETE = 0"];
+
+// Check user permissions
+if (strtolower($userName) !== 'admin') {
+    $whereClauses[] = "BD.FROM_PLACE = '$branchName'";
+}
+
+// Join WHERE clauses if any
+if (!empty($whereClauses)) {
+    $sql .= " WHERE " . implode(" AND ", $whereClauses);
+}
+
+$sql .= " ORDER BY BD.BOOKING_ID DESC";
         ?>
         <!--**********************************
             Content body start
@@ -243,19 +248,18 @@ $sql .= " ORDER BY BD.BOOKING_ID DESC";
             <!-- Modal content-->
             <div class="modal-content">
                 <div class="modal-header">
-                <h4 class="modal-title">Booking Details</h4>
+                    <h4 class="modal-title">Booking Details</h4>
 
                     <button type="button" class="close text-danger" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-sm-6">
+                    <div class="col-sm-6">
                             <div class="form-group">
-                                <label for="invoice-no">Invoice No</label>
-                                <input type="text" class="form-control" id="invoice-no" name="invoice-no" readonly />
+                                <label for="invoice-no">LR Number</label>
+                                <input type="text" class="form-control" id="lr-number" name="lr-number" readonly />
                             </div>
                         </div>
-
                         <div class="col-sm-6">
                             <div class="form-group">
                                 <label for="invoice-no">Status </label>
@@ -399,7 +403,7 @@ $sql .= " ORDER BY BD.BOOKING_ID DESC";
             <!-- Modal content-->
             <div class="modal-content">
                 <div class="modal-header">
-                <h4 class="modal-title">Booking Details</h4>
+                    <h4 class="modal-title">Booking Details</h4>
 
                     <button type="button" class="close text-danger" data-dismiss="modal">&times;</button>
                 </div>
@@ -411,12 +415,12 @@ $sql .= " ORDER BY BD.BOOKING_ID DESC";
                                 <input type="text" class="form-control" id="invoice-no" name="invoice-no" readonly />
                             </div>
                         </div>
-                        <!-- <div class="col-sm-6">
-                                                                <div class="form-group">
-                                                                    <label for="invoice-no">LR Number</label>
-                                                                    <input type="text" class="form-control" id="lr-number" name="lr-number" readonly />
-                                                                </div>
-                                                            </div> -->
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="invoice-no">LR Number</label>
+                                <input type="text" class="form-control" id="lr-number" name="lr-number" readonly />
+                            </div>
+                        </div>
                         <div class="col-sm-6">
                             <div class="form-group">
                                 <label for="invoice-no">Status </label>
@@ -623,7 +627,7 @@ $sql .= " ORDER BY BD.BOOKING_ID DESC";
                 // Add response in Modal body
                 let res = JSON.parse(response);
                 $('#lr-number').val(res['LR_NUMBER']);
-                $('#invoice-no').val(res['INVOICE_NUMBER']);
+                // $('#invoice-no').val(res['INVOICE_NUMBER']);
                 $('#invoice-status').val(getBookingStatus(res['BOOKING_STAUTS']));
                 $('#customer').val(res['CUSTOMER']);
                 $('#mobile').val(res['MOBILE']);

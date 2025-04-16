@@ -50,10 +50,7 @@
                                                 <h2 class="m-t-p5 mb-0">ADD CUSTOMER</h2>
                                             </div>
 
-                                            <button type="button" class="btn btn-success btn-sm pull-right"
-                                                style="margin-top: 0.75em;" onclick="goToBooking()">
-                                                <i class="material-icons">library_books</i>
-                                            </button>
+                                            
                                         </div>
                                     </div>
 

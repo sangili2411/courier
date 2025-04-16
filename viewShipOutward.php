@@ -1,5 +1,4 @@
 <?php
-session_start();
 include 'dbConn.php';
 
 date_default_timezone_set('Asia/Kolkata');
@@ -11,43 +10,7 @@ $date = date('Y-m-d', strtotime($date_1));
     Where booking status is 1 (Shipment is Direct)
     And booking status is 2 also shipment is Via Coimbatore (and SHOW_IN_VIEW_SHIPOUTWARD = 1)
 */
-$sql = "
-        SELECT 
-        BD.BOOKING_DATE, BD.CUSTOMER, BD.LR_NUMBER, BD.FROM_PLACE, BD.TO_PLACE,
-        BD.BOOKING_ID, BD.PAYMENT_TYPE, BD.QUANTITY, BD.TOTAL_AMOUNT,
-        CASE
-            WHEN BD.BOOKING_STAUTS = 0 THEN 'Booked/Ready To Ship'
-            WHEN BD.BOOKING_STAUTS = 1 THEN 'Ship Inward'
-            WHEN BD.BOOKING_STAUTS = 2 THEN 'Delivered'
-        END AS BOOKING_STAUTS
-        FROM booking_details BD
-        WHERE BD.BOOKING_STAUTS = 2
 
-        UNION 
-
-        SELECT 
-        BD.BOOKING_DATE, BD.CUSTOMER, BD.LR_NUMBER, BD.FROM_PLACE, BD.TO_PLACE,
-        BD.BOOKING_ID, BD.PAYMENT_TYPE, BD.QUANTITY, BD.TOTAL_AMOUNT,
-        CASE
-            WHEN BD.BOOKING_STAUTS = 0 THEN 'Booked/Ready To Ship'
-            WHEN BD.BOOKING_STAUTS = 1 THEN 'Ship Inward'
-            WHEN BD.BOOKING_STAUTS = 2 THEN 'Delivered'
-        END AS BOOKING_STAUTS
-        FROM booking_details BD
-        WHERE BD.BOOKING_STAUTS = 1
-        AND BD.SHIPMENT_VIA = 'Via_Coimbatore'
-        AND BD.SHOW_IN_VIEW_SHIPOUTWARD = 1
-    ";
-$whereSql = "";
-$userName = $_SESSION['userName'];
-$branchName = $_SESSION['admin'];
-if (strtolower($userName) == strtolower('admin')) {
-    // Nothing
-} else {
-    $whereSql = " AND FROM_PLACE = '$branchName' ";
-    $sql = $sql . $whereSql;
-}
-$sql = $sql . " ORDER BY BOOKING_DATE";
 ?>
 
 
@@ -154,7 +117,46 @@ $sql = $sql . " ORDER BY BOOKING_DATE";
     ***********************************-->
     <div id="main-wrapper">
         <?php
-        include 'header2.php';
+        include 'header.php';
+
+
+        $sql = "
+        SELECT 
+        BD.BOOKING_DATE, BD.CUSTOMER, BD.LR_NUMBER, BD.FROM_PLACE, BD.TO_PLACE,
+        BD.BOOKING_ID, BD.PAYMENT_TYPE, BD.QUANTITY, BD.TOTAL_AMOUNT,
+        CASE
+            WHEN BD.BOOKING_STAUTS = 0 THEN 'Booked/Ready To Ship'
+            WHEN BD.BOOKING_STAUTS = 1 THEN 'Ship Inward'
+            WHEN BD.BOOKING_STAUTS = 2 THEN 'Delivered'
+        END AS BOOKING_STAUTS
+        FROM booking_details BD
+        WHERE BD.BOOKING_STAUTS = 2
+
+        UNION 
+
+        SELECT 
+        BD.BOOKING_DATE, BD.CUSTOMER, BD.LR_NUMBER, BD.FROM_PLACE, BD.TO_PLACE,
+        BD.BOOKING_ID, BD.PAYMENT_TYPE, BD.QUANTITY, BD.TOTAL_AMOUNT,
+        CASE
+            WHEN BD.BOOKING_STAUTS = 0 THEN 'Booked/Ready To Ship'
+            WHEN BD.BOOKING_STAUTS = 1 THEN 'Ship Inward'
+            WHEN BD.BOOKING_STAUTS = 2 THEN 'Delivered'
+        END AS BOOKING_STAUTS
+        FROM booking_details BD
+        WHERE BD.BOOKING_STAUTS = 1
+        AND BD.SHIPMENT_VIA = 'Via_Coimbatore'
+        AND BD.SHOW_IN_VIEW_SHIPOUTWARD = 1
+    ";
+        $whereSql = "";
+        $userName = $_SESSION['userName'];
+        $branchName = $_SESSION['admin'];
+        if (strtolower($userName) == strtolower('admin')) {
+            // Nothing
+        } else {
+            $whereSql = " AND FROM_PLACE = '$branchName' ";
+            $sql = $sql . $whereSql;
+        }
+        $sql = $sql . " ORDER BY BOOKING_DATE";
         ?>
         <!--**********************************
             Content body start
@@ -262,7 +264,7 @@ $sql = $sql . " ORDER BY BOOKING_DATE";
                                     <!-- Modal content-->
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                        <h4 class="modal-title">Booking Details</h4>
+                                            <h4 class="modal-title">Booking Details</h4>
                                             <button type="button" class="close text-danger" data-dismiss="modal">&times;</button>
                                         </div>
                                         <div class="row modal-body">
@@ -441,7 +443,7 @@ $sql = $sql . " ORDER BY BOOKING_DATE";
                 $('#delivery-to').val(res['DELIVERY_TO'] ?? 'NO DELIVERY TO');
                 $('#delivery-mobile').val(res['DELIVERY_MOBILE'] ?? 'NO DELIVERY MOBILE');
                 $('#from').val(res['FROM_PLACE'] ?? 'NO FROM PLACE');
-                $('#from-address').val(res['FROM_ADDRESS']  ?? 'NO FROM ADDRESS');
+                $('#from-address').val(res['FROM_ADDRESS'] ?? 'NO FROM ADDRESS');
                 $('#to').val(res['TO_PLACE'] ?? 'NO TO PLACE');
                 $('#to-address').val(res['TO_ADDRESS'] ?? 'NO TO ADDRESS');
                 $('#quantity').val(res['QUANTITY'] ?? 'NO QUANTITY');

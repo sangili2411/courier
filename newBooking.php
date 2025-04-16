@@ -188,7 +188,7 @@ if (isset($_POST['submit'])) {
                                     <div class="row">
                                         <div class="col-12 d-flex justify-content-between align-items-center">
                                             <div class="flex-grow-1 text-center">
-                                                <h2 class="m-t-p5 mb-4">PAGE NAME</h2>
+                                                <h2 class="m-t-p5 mb-4">NEW BOOKING</h2>
                                             </div>
 
                                             <button type="button" class="btn btn-info btn-md" onclick="window.location.href='viewBookingList.php'">

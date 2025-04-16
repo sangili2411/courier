@@ -63,14 +63,14 @@
                                                         <div class="form-group">
                                                             <label for="hub">Hub Mobile<span class="mandatory-field text-danger">*</span></label>
                                                             <input type="number" required class="form-control" id="hubMobile" minlength="10" maxlength="10" oninput="this.value=this.value.slice(0,10)"
-                                                                placeholder="Enter Hub Name" name="hub" />
+                                                                placeholder="Enter Mobile number" name="hub" />
                                                         </div>
                                                         <div class="form-group">
                                                             <label for="hub">Hub Address<span class="mandatory-field text-danger">*</span></label>
                                                           <textarea name="hubAddress" id="hubAddress" rows="3" class="form-control"></textarea>
                                                         </div>
                                                         <button class="btn btn-success mb-3" style="margin-left: 40%;" onclick="validateAndSaveRecords()">
-                                                            <div class="fa fa-floppy-o" aria-hidden="true"></div>
+                                                            <div class="fa fa-floppy-o font-medium menu-icon" aria-hidden="true"></div>
                                                             &nbsp; Save
                                                         </button>
                                                     </form>
@@ -219,7 +219,7 @@
             },
             success: function(response) {
                 console.log("Response from server:", response);
-                if (response.toString() == "Insert Successful") {
+                if (response.startsWith("Insert Successful")) {
                     alert("✔️ Hub Added Successfully!");
                     window.location.reload();
                 } else if (response.toString() == "HUB_NAME_ALREADY_EXISTS") {

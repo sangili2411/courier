@@ -119,8 +119,10 @@ if (isset($_POST['editPlace'])) {
 }
 
 
-//addBranchDetails
+// addBranchDetails
 if (isset($_POST['addBranchDetails'])) {
+  
+    // Sanitize inputs
     $inputs = [
         'branchName',
         'branchMobile',
@@ -129,21 +131,20 @@ if (isset($_POST['addBranchDetails'])) {
         'branchPlace',
         'userName',
         'password',
-        'commission',
+        'isAgent',
         'bookingCommission',
-        'recivedCommission',
-        'isAgent'
+        'receivedCommission'
     ];
 
     foreach ($inputs as $input) {
-        $$input = mysqli_real_escape_string($conn, $_POST[$input] ?? '');
+        $$input = isset($_POST[$input]) ? mysqli_real_escape_string($conn, $_POST[$input]) : '';
     }
 
     // Check for existing entries
     $uniqueChecks = [
-        'BRANCH_NAME' => $branchPlace,
-        'BRANCH_MOBILE' => $branchMobile,
-        'USER_NAME' => $userName
+        'BRANCH_NAME' => $branchName,
+        'USER_NAME' => $userName,
+        'BRANCH_MOBILE' => $branchMobile
     ];
 
     foreach ($uniqueChecks as $field => $value) {
@@ -154,34 +155,27 @@ if (isset($_POST['addBranchDetails'])) {
         }
     }
 
-
+    // Process expenses
     $expenseDescriptions = $_POST['expense_description'] ?? [];
     $expenseAmounts = $_POST['expense_amount'] ?? [];
-    $expenseValues = $_POST['expense'] ?? [];
-
     $expenses = [];
+    $totalExpenseAmount = 0;
 
     for ($i = 0; $i < count($expenseDescriptions); $i++) {
-        $desc = trim($expenseDescriptions[$i]);
-        $amt = trim($expenseAmounts[$i]);
+        $desc = trim($expenseDescriptions[$i] ?? '');
+        $amt = trim($expenseAmounts[$i] ?? '');
 
-        if ($desc !== '' || $amt !== '') {
+        if (!empty($desc) || !empty($amt)) {
+            $amount = is_numeric($amt) ? floatval($amt) : 0;
             $expenses[] = [
                 'description' => mysqli_real_escape_string($conn, $desc),
-                'amount' => mysqli_real_escape_string($conn, $amt)
+                'amount' => $amount
             ];
+            $totalExpenseAmount += $amount;
         }
     }
 
-
-    $totalExpenseAmount = 0;
-    foreach ($expenseValues as $val) {
-        $totalExpenseAmount += floatval($val);
-    }
-
-    $expenseJson = json_encode($expenses);
-
-
+    // Prepare data for insertion
     $data = [
         "BRANCH_NAME" => $branchName,
         "BRANCH_MOBILE" => $branchMobile,
@@ -190,84 +184,83 @@ if (isset($_POST['addBranchDetails'])) {
         "PLACE" => $branchPlace,
         "USER_NAME" => $userName,
         "PASSWORD" => $password,
-        "BOOKING_COMMISSION"      => !empty($bookingCommission) ? $bookingCommission : null,
-        "RECIVED_COMMISSION"    => !empty($recivedCommission) ? $recivedCommission : null,
-        "EXPENSE"              => !empty($expenseArray) ? json_encode($expenseArray) : null,
-        "TOTAL_EXPENSE_AMOUNT" => !empty($totalExpenseAmount) ? $totalExpenseAmount : null,
+        "PAID_COMMISSION" =>$bookingCommission,
+        "TOPAID_COMMISSION" =>$receivedCommission ,
+        "EXPENSE" => !empty($expenses) ? json_encode($expenses) : null,
+        "TOTAL_EXPENSE_AMOUNT" => $totalExpenseAmount > 0 ? $totalExpenseAmount : null,
         "STATUS" => 0,
-        "ISAGENT" => $isAgent ?: 0
+        "ISAGENT" => $isAgent
     ];
 
+    // Insert data
     echo $dbOperator->insertData("branch_details", $data);
 }
 
 //updateBranchDetails
-if (isset($_POST['updateBranchDetails'])) {
-    $branchOfficeId = mysqli_real_escape_string($conn, $_POST['branchOfficeId']);
-    $inputs = [
-        'branchName',
-        'branchMobile',
-        'branchAlternativeMobile',
-        'branchAddress',
-        'branchPlace',
-        'userName',
-        'password',
-        'commission',
-        'paidCommission',
-        'totalCommission    ',
-        'isAgent'
-    ];
+// if (isset($_POST['updateBranchDetails'])) {
+//     $branchOfficeId = mysqli_real_escape_string($conn, $_POST['branchOfficeId']);
+//     $inputs = [
+//         'branchName',
+//         'branchMobile',
+//         'branchAlternativeMobile',
+//         'branchAddress',
+//         'branchPlace',
+//         'userName',
+//         'password',
+//         'paidCommission',
+//         'totalCommission    ',
+//         'isAgent'
+//     ];
 
-    foreach ($inputs as $input) {
-        $$input = mysqli_real_escape_string($conn, $_POST[$input] ?? '');
-    }
-
-
-    $expenseDescriptions = $_POST['expense_description'] ?? [];
-    $expenseAmounts = $_POST['expense_amount'] ?? [];
-    $expenseValues = $_POST['expense'] ?? [];
-
-    $expenses = [];
-
-    for ($i = 0; $i < count($expenseDescriptions); $i++) {
-        $desc = trim($expenseDescriptions[$i]);
-        $amt = trim($expenseAmounts[$i]);
-
-        if ($desc !== '' || $amt !== '') {
-            $expenses[] = [
-                'description' => mysqli_real_escape_string($conn, $desc),
-                'amount' => mysqli_real_escape_string($conn, $amt)
-            ];
-        }
-    }
+//     foreach ($inputs as $input) {
+//         $$input = mysqli_real_escape_string($conn, $_POST[$input] ?? '');
+//     }
 
 
-    $totalExpenseAmount = 0;
-    foreach ($expenseValues as $val) {
-        $totalExpenseAmount += floatval($val);
-    }
+//     $expenseDescriptions = $_POST['expense_description'] ?? [];
+//     $expenseAmounts = $_POST['expense_amount'] ?? [];
+//     $expenseValues = $_POST['expense'] ?? [];
 
-    $expenseJson = json_encode($expenses);
+//     $expenses = [];
+
+//     for ($i = 0; $i < count($expenseDescriptions); $i++) {
+//         $desc = trim($expenseDescriptions[$i]);
+//         $amt = trim($expenseAmounts[$i]);
+
+//         if ($desc !== '' || $amt !== '') {
+//             $expenses[] = [
+//                 'description' => mysqli_real_escape_string($conn, $desc),
+//                 'amount' => mysqli_real_escape_string($conn, $amt)
+//             ];
+//         }
+//     }
 
 
-    $data = [
-        "BRANCH_NAME" => $branchName,
-        "BRANCH_MOBILE" => $branchMobile,
-        "ALTERNATIVE_MOBILE" => $branchAlternativeMobile,
-        "ADDRESS" => $branchAddress,
-        "PLACE" => $branchPlace,
-        "USER_NAME" => $userName,
-        "PASSWORD" => $password,
-        "COMMISSION"           => !empty($commission) ? $commission : null,
-        "PAID_COMMISSION"      => !empty($paidCommission) ? $paidCommission : null,
-        "TOPAID_COMMISSION"    => !empty($totalCommission) ? $totalCommission : null,
-        "EXPENSE"              => !empty($expenseArray) ? json_encode($expenseArray) : null,
-        "TOTAL_EXPENSE_AMOUNT" => !empty($totalExpenseAmount) ? $totalExpenseAmount : null,
-        "STATUS" => 0,
-        "ISAGENT" => $isAgent ?: 0
-    ];
-    echo $dbOperator->updateData("branch_details", $data, ["BRANCH_OFFICE_ID" => $branchOfficeId]);
-}
+//     $totalExpenseAmount = 0;
+//     foreach ($expenseValues as $val) {
+//         $totalExpenseAmount += floatval($val);
+//     }
+
+//     $expenseJson = json_encode($expenses);
+
+
+//     $data = [
+//         "BRANCH_NAME" => $branchName,
+//         "BRANCH_MOBILE" => $branchMobile,
+//         "ALTERNATIVE_MOBILE" => $branchAlternativeMobile,
+//         "ADDRESS" => $branchAddress,
+//         "PLACE" => $branchPlace,
+//         "USER_NAME" => $userName,
+//         "PASSWORD" => $password,
+//         "PAID_COMMISSION"      => !empty($paidCommission) ? $paidCommission : null,
+//         "TOPAID_COMMISSION"    => !empty($totalCommission) ? $totalCommission : null,
+//         "EXPENSE"              => !empty($expenseArray) ? json_encode($expenseArray) : null,
+//         "TOTAL_EXPENSE_AMOUNT" => !empty($totalExpenseAmount) ? $totalExpenseAmount : null,
+//         "STATUS" => 0,
+//         "ISAGENT" => $isAgent ?: 0
+//     ];
+//     echo $dbOperator->updateData("branch_details", $data, ["BRANCH_OFFICE_ID" => $branchOfficeId]);
+// }
 
 //deleteBranch
 if (isset($_POST['deleteBranch'])) {
@@ -333,7 +326,7 @@ if (isset($_POST['addDriver'])) {
     $driverLicense = $_POST['driverLicense'];
     $vehicleno = $_POST['vehicleno'];
     $description = $_POST['description'];
-    $advance = $_POST['advance'];
+   
 
     $selectCondition = array(
         "MOBILE" => $driverMobile
@@ -349,8 +342,8 @@ if (isset($_POST['addDriver'])) {
             "MOBILE" => $driverMobile,
             "LICENSE" => $driverLicense,
             "VEHICLE_NUMBER" => $vehicleno,
-            "VEHICLE_DESCRIPTION" => $description,
-            "ADVANCE_AMOUNT" => $advance,
+            "VEHICLE_DESCRIPTION" => $description
+           
 
         );
         echo $dbOperator->insertData("driver_details", $data);
@@ -365,7 +358,7 @@ if (isset($_POST['editdriver'])) {
     $driverLicense = $_POST['driverLicense'];
     $vehicleno = $_POST['vehicleno'];
     $description = $_POST['description'];
-    $advance = $_POST['advance'];
+
 
     $checkQuery = $dbOperator->selectQueryToJson("driver_details", "MOBILE", array("MOBILE" => $driverName));
     $resultArray = json_decode($checkQuery, true);
@@ -380,7 +373,7 @@ if (isset($_POST['editdriver'])) {
             "LICENSE" => $driverLicense,
             "VEHICLE_NUMBER" => $vehicleno,
             "VEHICLE_DESCRIPTION" => $description,
-            "ADVANCE_AMOUNT" => $advance
+           
         );
         echo $dbOperator->updateData("driver_details", $data, ["DRIVER_ID" => $driverid]);
     }
@@ -551,7 +544,7 @@ if (isset($_POST['Calcel'])) {
 
     $data = array(
         'ACCOUNTS_CANCEL_NOTE' => $reason,
-        "IS_REQUEST" => 0
+        "IS_REQUEST" => 2
 
     );
     echo $dbOperator->updateData("branch_account", $data, ["BRANCH_ACCOUNT_ID" => $id]);

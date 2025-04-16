@@ -1,25 +1,11 @@
 <?php
-session_start();
+
 include 'dbConn.php';
 
 date_default_timezone_set('Asia/Kolkata');
 $date_1 = date('d-m-Y H:i');
 $date = date('Y-m-d', strtotime($date_1));
 
-$sql = "SELECT BD.BOOKING_DATE, BD.CUSTOMER, BD.LR_NUMBER, BD.FROM_PLACE, BD.TO_PLACE,
-        BD.BOOKING_ID, BD.FROM_MOBILE, BD.TO_MOBILE, BD.DELIVERY_TO
-        FROM booking_details BD
-        WHERE BD.BOOKING_STAUTS = 0" . " AND BD.IS_DELETE= 0 ";
-$whereSql = "";
-$userName = $_SESSION['userName'];
-$branchName = $_SESSION['admin'];
-if (strtolower($userName) == strtolower('admin')) {
-    // Nothing
-} else {
-    $whereSql = " AND FROM_PLACE = '$branchName' ";
-    $sql = $sql . $whereSql;
-}
-$sql = $sql . " ORDER BY BOOKING_DATE";
 ?>
 
 
@@ -151,7 +137,23 @@ $sql = $sql . " ORDER BY BOOKING_DATE";
     <div id="main-wrapper">
 
         <?php
-        include 'header2.php';
+        include 'header.php';
+
+
+        $sql = "SELECT BD.BOOKING_DATE, BD.CUSTOMER, BD.LR_NUMBER, BD.FROM_PLACE, BD.TO_PLACE,
+                BD.BOOKING_ID, BD.FROM_MOBILE, BD.TO_MOBILE, BD.DELIVERY_TO
+                FROM booking_details BD
+                WHERE BD.BOOKING_STAUTS = 0" . " AND BD.IS_DELETE= 0 ";
+        $whereSql = "";
+        $userName = $_SESSION['userName'];
+        $branchName = $_SESSION['admin'];
+        if (strtolower($userName) == strtolower('admin')) {
+            // Nothing
+        } else {
+            $whereSql = " AND FROM_PLACE = '$branchName' ";
+            $sql = $sql . $whereSql;
+        }
+        $sql = $sql . " ORDER BY BOOKING_DATE";
         ?>
 
         <!--**********************************
@@ -181,13 +183,43 @@ $sql = $sql . " ORDER BY BOOKING_DATE";
                                     </header>
                                     <br>
                                     <div class="row" style="margin: 0.2em;">
-                                        <div class="col-sm-3">
+                                        <div class="col-sm-4">
                                             <div class="form-group">
                                                 <label for="customer-mobile">Vehicle No<span class="mandatory-field">*</span></label>
-                                                <input type="text" required class="form-control" id="customer-mobile" placeholder="Enter Vehicle No" minlength="10" maxlength="10" oninput="this.value=this.value.slice(0,10)" name="customer-mobile" />
+                                                <input type="text" required class="form-control" id="customer-mobile" placeholder="Enter Vehicle No" />
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-4">
+                                            <div class="form-group">
+                                                <label for="customer-mobile">Advance Amount<span class="mandatory-field">*</span></label>
+                                                <input type="number" required class="form-control" id="advance-amount" placeholder="Enter advance amount" />
                                             </div>
                                         </div>
 
+                                        <?php
+                                        $getHub = "SELECT * FROM hub";
+                                        $result = $conn->query($getHub);
+                                        ?>
+
+                                        <div class="col-sm-4">
+                                            <div class="form-group">
+                                                <label for="shipment-via">
+                                                    Shipment Via <span class="mandatory-field">*</span>
+                                                </label>
+                                                <select class="form-control" id="shipment-via" name="shipment_via">
+                                                    <option value="">-- SELECT SHIPMENT ROUTE --</option>
+                                                    <option value="Direct">Direct</option>
+                                                    <?php
+                                                    if ($result && $result->num_rows > 0) {
+                                                        while ($row = $result->fetch_assoc()) {
+                                                            $hubName = htmlspecialchars($row['HUB_NAME']);
+                                                            echo "<option value='Via_{$hubName}'>Via {$hubName}</option>";
+                                                        }
+                                                    }
+                                                    ?>
+                                                </select>
+                                            </div>
+                                        </div>
                                         <div class="col-sm-3">
                                             <div class="row">
                                                 <div class="col-sm-12">
@@ -226,31 +258,6 @@ $sql = $sql . " ORDER BY BOOKING_DATE";
                                                 <input type="number" required class="form-control" id="driver-mobile" minlength="10" maxlength="10" oninput="this.value=this.value.slice(0,10)" placeholder="Mobile No" name="driver-mobile" />
                                             </div>
                                         </div>
-                                        <?php
-                                        $getHub = "SELECT * FROM hub";
-                                        $result = $conn->query($getHub);
-                                        ?>
-
-                                        <div class="col-sm-3">
-                                            <div class="form-group">
-                                                <label for="shipment-via">
-                                                    Shipment Via <span class="mandatory-field">*</span>
-                                                </label>
-                                                <select class="form-control" id="shipment-via" name="shipment_via">
-                                                    <option value="">-- SELECT SHIPMENT ROUTE --</option>
-                                                    <option value="Direct">Direct</option>
-                                                    <?php
-                                                    if ($result && $result->num_rows > 0) {
-                                                        while ($row = $result->fetch_assoc()) {
-                                                            $hubName = htmlspecialchars($row['HUB_NAME']);
-                                                            echo "<option value='Via_{$hubName}'>Via {$hubName}</option>";
-                                                        }
-                                                    }
-                                                    ?>
-                                                </select>
-                                            </div>
-                                        </div>
-
                                     </div>
 
                                     <div id="print-div">
@@ -403,8 +410,8 @@ $sql = $sql . " ORDER BY BOOKING_DATE";
                                         <div class="row modal-body">
                                             <div class="col-sm-6">
                                                 <div class="form-group">
-                                                    <label for="invoice-no">Invoice No</label>
-                                                    <input type="text" class="form-control" id="lr-no" name="lr-no" readonly />
+                                                    <label for="invoice-no">LR Number</label>
+                                                    <input type="text" class="form-control" id="lr-number" name="lr-number" readonly />
                                                 </div>
                                             </div>
                                             <div class="col-sm-6">
@@ -617,6 +624,9 @@ $sql = $sql . " ORDER BY BOOKING_DATE";
             success: function(response) {
                 console.log(response);
                 if (response.toString().includes("Success")) {
+                    alert('✔️ Success Cancel');
+                    window.location.reload();
+
                     $('.invoice-id-' + bookingId).removeClass("move-success");
                 }
             }
@@ -630,6 +640,7 @@ $sql = $sql . " ORDER BY BOOKING_DATE";
             alert("❌ Vehicle No is mandatory!")
             return false;
         }
+
         let driverName = $('#driver-name').val();
         if (driverName === undefined || driverName === null || driverName === "") {
             alert("❌ Driver Name is mandatory!")
@@ -645,10 +656,14 @@ $sql = $sql . " ORDER BY BOOKING_DATE";
             alert("❌ Shipment Via is mandatory!");
             return false;
         }
+        let advance = $('#advnce-amount').val();
+
         let driverDetailsObj = {};
         driverDetailsObj["DRIVER_NAME"] = driverName;
         driverDetailsObj["DRIVER_MOBILE"] = driverMobile;
         driverDetailsObj["VECHILE"] = vehicle;
+        driverDetailsObj["ADVANCE_AMOUNT"] = advance;
+
 
         let tdId = $("#invoice-id-" + bookingId);
         $.ajax({
@@ -661,8 +676,11 @@ $sql = $sql . " ORDER BY BOOKING_DATE";
                 shipmentVia: shipmentVia
             },
             success: function(response) {
+                console.log(response);
                 if (response.toString().includes("Success")) {
                     $('.invoice-id-' + bookingId).addClass("move-success");
+                    window.location.reload();
+
                 }
             }
         });
@@ -683,7 +701,7 @@ $sql = $sql . " ORDER BY BOOKING_DATE";
             success: function(response) {
                 // Add response in Modal body
                 let res = JSON.parse(response);
-                $('#lr-no').val(res['INVOICE_NUMBER'] ?? 'NO LR NUMBER');
+                $('#lr-number').val(res['INVOICE_NUMBER'] ?? 'NO LR NUMBER');
                 $('#invoice-status').val(res['BOOKING_STAUTS'] ?? 'NO BOOKING_STAUTS');
                 $('#customer').val(res['CUSTOMER'] ?? 'NO CUSTOMER');
                 $('#mobile').val(res['MOBILE'] ?? 'NO MOBILE');

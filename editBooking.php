@@ -1,5 +1,4 @@
 <?php
-
 include 'dbConn.php';
 
 // Initialize all variables with empty values
@@ -36,7 +35,7 @@ if (isset($conn)) {
 if ($bookingId && is_numeric($bookingId)) {
     $bookingId = intval($bookingId);
     $selectQuery = "SELECT * FROM booking_details WHERE BOOKING_ID = $bookingId";
-    
+
     if ($result = mysqli_query($conn, $selectQuery)) {
         if (mysqli_num_rows($result) > 0) {
             $row = mysqli_fetch_assoc($result);
@@ -74,7 +73,8 @@ if ($bookingId && is_numeric($bookingId)) {
 }
 
 // Escape all variables for JavaScript
-function js_escape($str) {
+function js_escape($str)
+{
     return addslashes(htmlspecialchars($str ?? '', ENT_QUOTES));
 }
 ?>
@@ -424,7 +424,7 @@ function js_escape($str) {
                 $('#' + textAreaId).val(branchAndPlaceMap[selectedVal]);
                 $('#' + textAreaId).attr("readonly", true);
             }
-            
+
             if (textAreaId.toString().startsWith("to-")) {
                 let fromBranch = $("#from-branch-place").val();
                 if (fromBranch === "") {
@@ -494,7 +494,7 @@ function js_escape($str) {
                 '    </div>' +
                 '    <div class="col-sm-3">' +
                 '        <div class="form-group">' +
-                '            <input type="number" class="form-control" id="item-quantity-' + rowNumber + '" onchange="quantityChanged(' + rowNumber + ')" />' +
+                '            <input type="number" class="form-control" id="item-quantity-' + rowNumber + '" onchange="quantityChanged(' + rowNumber + ')" min="1" />' +
                 '        </div>' +
                 '    </div>' +
                 '    <div class="col-sm-1">' +
@@ -517,7 +517,7 @@ function js_escape($str) {
             $("#quantity-details-div").append(htmlString);
             rowNumber += 1;
             $("#quantity-box").val(rowNumber);
-            
+
             // Initialize select2 for the new select element
             $('#item-select-' + (rowNumber - 1)).select2();
         }
@@ -532,35 +532,42 @@ function js_escape($str) {
         }
 
         function quantityChanged(rowNum) {
-            let quantity = $("#item-quantity-" + rowNum).val();
-            if (isNaN(parseInt(quantity))) {
-                alert("⚠️ The Quantity entered is incorrect. Please correct it.");
-                $("#item-quantity-" + rowNum).val('');
+            let quantityInput = $("#item-quantity-" + rowNum);
+            let quantity = quantityInput.val();
+            
+            if (!quantity || isNaN(parseInt(quantity)) || parseInt(quantity) <= 0) {
+                alert("⚠️ Please enter a valid quantity greater than 0.");
+                quantityInput.val('');
                 return false;
-            } else if (parseInt(quantity) <= 0) {
-                alert("⚠️ Quantity must be greater than 0.");
-                $("#item-quantity-" + rowNum).val('');
-                return false;
-            } else {
-                quantity = parseInt(quantity);
-                let totalQuantity = parseInt($("#quantity-no").val()) || 0;
-                totalQuantity += quantity;
-                $("#quantity-no").val(totalQuantity);
-                $("#item-quantity-" + rowNum).attr("disabled", true);
             }
+            
+            quantity = parseInt(quantity);
+            let totalQuantity = parseInt($("#quantity-no").val()) || 0;
+            
+            // Check if this row already contributed to the total
+            let previousContribution = parseInt(quantityInput.data('previous-quantity')) || 0;
+            
+            // Update total by removing previous contribution and adding new one
+            totalQuantity = totalQuantity - previousContribution + quantity;
+            $("#quantity-no").val(totalQuantity);
+            
+            // Store the current quantity as previous for next change
+            quantityInput.data('previous-quantity', quantity);
+            quantityInput.attr("disabled", true);
         }
 
         function updateItemListAndQuantityDetails(rowNum) {
-            let selectedItem = $("#item-select-" + rowNum).val();
-            let enteredQuantity = $("#item-quantity-" + rowNum).val();
-            if (selectedItem != "") {
-                itemsList.push(selectedItem);
-            }
-            enteredQuantity = isNaN(parseInt(enteredQuantity)) ? 0 : parseInt(enteredQuantity);
-            if (enteredQuantity > 0) {
+            let quantityInput = $("#item-quantity-" + rowNum);
+            let previousContribution = parseInt(quantityInput.data('previous-quantity')) || 0;
+            
+            if (previousContribution > 0) {
                 let totalQuantity = parseInt($("#quantity-no").val()) || 0;
-                totalQuantity -= enteredQuantity;
-                $("#quantity-no").val(totalQuantity);
+                $("#quantity-no").val(totalQuantity - previousContribution);
+            }
+            
+            let selectedItem = $("#item-select-" + rowNum).val();
+            if (selectedItem) {
+                itemsList.push(selectedItem);
             }
         }
 
@@ -570,6 +577,7 @@ function js_escape($str) {
             $("#item-select-" + rowNum).attr("disabled", false);
             $("#item-quantity-" + rowNum).val('');
             $("#item-quantity-" + rowNum).attr("disabled", false);
+            $("#item-quantity-" + rowNum).removeData('previous-quantity');
         }
 
         function deleteRow(rowNum) {
@@ -690,7 +698,7 @@ function js_escape($str) {
                 alert("❌ Delivery Method is mandatory!");
                 return null;
             }
-            
+
             if (canInsert) {
                 return {
                     'customer': customer,
@@ -770,7 +778,7 @@ function js_escape($str) {
 
         function setQuantityDetails(quantityJson) {
             console.log("Setting quantity details:", quantityJson);
-            if (!quantityJson) return;
+            if (!quantityJson || Object.keys(quantityJson).length === 0) return;
 
             try {
                 // If quantityJson is a string, parse it
@@ -779,15 +787,40 @@ function js_escape($str) {
                 }
 
                 let keys = Object.keys(quantityJson);
+                let totalQuantity = 0;
+                
+                // Clear any existing rows first
+                $("#quantity-details-div").empty();
+                $("#quantity-box").val(0);
+                
                 for (let i = 0; i < keys.length; i++) {
+                    // Add a new row
                     addQuantityDetailsRow();
+                    
+                    // Set the item and quantity
                     $("#item-select-" + i).val(keys[i]).trigger('change');
                     $("#item-quantity-" + i).val(quantityJson[keys[i]]);
-
-                    // Trigger the change events to update state
-                    itemSelectChanged(i);
-                    quantityChanged(i);
+                    
+                    // Calculate total quantity
+                    totalQuantity += parseInt(quantityJson[keys[i]]);
+                    
+                    // Mark this item as selected (remove from available items)
+                    const elementIndex = itemsList.indexOf(keys[i]);
+                    if (elementIndex > -1) {
+                        itemsList.splice(elementIndex, 1);
+                    }
+                    
+                    // Disable the fields to match the behavior of the add flow
+                    $("#item-select-" + i).attr("disabled", true);
+                    $("#item-quantity-" + i).attr("disabled", true);
+                    
+                    // Store the quantity for change tracking
+                    $("#item-quantity-" + i).data('previous-quantity', quantityJson[keys[i]]);
                 }
+                
+                // Update the total quantity
+                $("#quantity-no").val(totalQuantity);
+                
             } catch (e) {
                 console.error("Error setting quantity details:", e);
             }
@@ -799,7 +832,11 @@ function js_escape($str) {
             <?php if (isset($_GET['bookingId']) && !empty($quantityDetails)): ?>
                 try {
                     let quantityJson = <?php echo $quantityDetails; ?>;
-                    if (quantityJson && typeof quantityJson === 'object') {
+                    if (quantityJson && typeof quantityJson === 'object' && Object.keys(quantityJson).length > 0) {
+                        // First initialize the items list
+                        itemsList = [...itemsNameArr]; // Reset to original items
+                        
+                        // Then set the quantity details (which will remove used items from the list)
                         setQuantityDetails(quantityJson);
                     }
                 } catch (e) {

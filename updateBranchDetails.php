@@ -1,48 +1,121 @@
 <?php
-session_start();
 include 'dbConn.php';
 
+// Initialize variables
+$branchNameFromQry = $branchMobileFromQry = $branchAlternativeMobileFromQry = $addressFromQry = '';
+$placeFromQry = $userNameFromQry = $passwordFromQry = '';
+$paidComissionFromQry = $totalComissionFromQry = $isAgentFromQry = $expenseAmountFromQry = 0;
+$expenseDescriptions = [];
 
-
-
-if (isset($_GET['branchOfficeId']) && !empty($_GET['branchOfficeId'])) {
-    $branchOfficeId = $_GET['branchOfficeId'];
-    if (isset($conn)) {
-        $resultBranchOfficeQry = mysqli_query($conn, "SELECT * FROM branch_details WHERE BRANCH_OFFICE_ID = $branchOfficeId");
-        while ($row = mysqli_fetch_array($resultBranchOfficeQry)) {
-            $branchNameFromQry = $row['BRANCH_NAME'];
-            $branchMobileFromQry = $row['BRANCH_MOBILE'];
-            $branchAlternativeMobileFromQry = $row['ALTERNATIVE_MOBILE'];
-            $addressFromQry = $row['ADDRESS'];
-            $placeFromQry = $row['PLACE'];
-            $userNameFromQry = $row['USER_NAME'];
-            $passwordFromQry = $row['PASSWORD'];
-            $comissionFromQry = $row['COMMISSION'];
-            $paidComissionFromQry = $row['PAID_COMMISSION'];
-            $totalComissionFromQry = $row['TOTAL_COMMISSION'];
-            $isAgentFromQry = $row['ISAGENT'];
-            $expenseAmountFromQry = $row['TOTAL_EXPENSE_AMOUNT'];
-
-            $expenseFromQry = $row['EXPENSE'];
-            $expenseDescriptions = json_decode($expenseFromQry, true);
+// Process form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['branchOfficeId'])) {
+    $branchOfficeId = intval($_GET['branchOfficeId']);
+    
+    // Sanitize inputs
+    $branchName = mysqli_real_escape_string($conn, $_POST['branch-name']);
+    $branchMobile = mysqli_real_escape_string($conn, $_POST['branch-mobile']);
+    $branchAlternativeMobile = mysqli_real_escape_string($conn, $_POST['branch-alternative-mobile'] ?? '');
+    $address = mysqli_real_escape_string($conn, $_POST['branch-address']);
+    $place = mysqli_real_escape_string($conn, $_POST['branch-place']);
+    $userName = mysqli_real_escape_string($conn, $_POST['user-name']);
+    $password = mysqli_real_escape_string($conn, $_POST['password']);
+    $isAgent = isset($_POST['is_agent']) ? 1 : 0;
+    
+    // Handle agent commission or expenses
+    if ($isAgent) {
+        $paidCommission = floatval($_POST['paid_commission'] ?? 0);
+        $totalCommission = floatval($_POST['total_commission'] ?? 0);
+        $expense = '[]';
+        $totalExpenseAmount = 0;
+    } else {
+        $paidCommission = 0;
+        $totalCommission = 0;
+        
+        // Process expense items
+        $expenseItems = [];
+        if (isset($_POST['expense_description'])) {
+            foreach ($_POST['expense_description'] as $index => $description) {
+                if (!empty($description) && isset($_POST['expense_amount'][$index])) {
+                    $expenseItems[] = [
+                        'description' => mysqli_real_escape_string($conn, $description),
+                        'amount' => floatval($_POST['expense_amount'][$index])
+                    ];
+                }
+            }
         }
+        $expense = json_encode($expenseItems);
+        $totalExpenseAmount = array_sum(array_column($expenseItems, 'amount'));
     }
-    //    echo json_encode($row['BRANCH_NAME']);
+    
+    // Update query
+    $updateQuery = "UPDATE branch_details SET 
+                    BRANCH_NAME = '$branchName',
+                    BRANCH_MOBILE = '$branchMobile',
+                    ALTERNATIVE_MOBILE = '$branchAlternativeMobile',
+                    ADDRESS = '$address',
+                    PLACE = '$place',
+                    USER_NAME = '$userName',
+                    PASSWORD = '$password',
+                    ISAGENT = $isAgent,
+                    PAID_COMMISSION = $paidCommission,
+                    TOPAID_COMMISSION = $totalCommission,
+                    EXPENSE = '$expense',
+                    TOTAL_EXPENSE_AMOUNT = $totalExpenseAmount
+                 
+                    WHERE BRANCH_OFFICE_ID = $branchOfficeId";
+    
+    if (mysqli_query($conn, $updateQuery)) {
+        echo "<script>
+            alert('✔️ Branch office updated successfully');
+            window.location.href = 'branchOfficeView.php';
+        </script>";
+    } else {
+        $errorMessage = "Error updating branch office: " . mysqli_error($conn);
+    }
+    
+}
+
+// Fetch existing data
+if (isset($_GET['branchOfficeId']) && !empty($_GET['branchOfficeId'])) {
+    $branchOfficeId = intval($_GET['branchOfficeId']);
+    $resultBranchOfficeQry = mysqli_query($conn, "SELECT * FROM branch_details WHERE BRANCH_OFFICE_ID = $branchOfficeId");
+    
+    if ($resultBranchOfficeQry && mysqli_num_rows($resultBranchOfficeQry) > 0) {
+        $row = mysqli_fetch_array($resultBranchOfficeQry);
+        $branchNameFromQry = htmlspecialchars($row['BRANCH_NAME']);
+        $branchMobileFromQry = htmlspecialchars($row['BRANCH_MOBILE']);
+        $branchAlternativeMobileFromQry = htmlspecialchars($row['ALTERNATIVE_MOBILE'] ?? '');
+        $addressFromQry = htmlspecialchars($row['ADDRESS']);
+        $placeFromQry = htmlspecialchars($row['PLACE']);
+        $userNameFromQry = htmlspecialchars($row['USER_NAME']);
+        $passwordFromQry = htmlspecialchars($row['PASSWORD']);
+
+        $paidComissionFromQry = floatval($row['PAID_COMMISSION']);
+        $totalComissionFromQry = floatval($row['TOPAID_COMMISSION']);
+        $isAgentFromQry = intval($row['ISAGENT']);
+        $expenseAmountFromQry = floatval($row['TOTAL_EXPENSE_AMOUNT']);
+
+        $expenseFromQry = $row['EXPENSE'];
+        $expenseDescriptions = json_decode($expenseFromQry, true) ?: [];
+    } else {
+        die("Invalid branch office ID");
+    }
+} else {
+    die("Branch office ID not provided");
 }
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
-
-<link rel="stylesheet" href="./css/table-filter.css">
-
-
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Branch Office Update</title>
+    <link rel="stylesheet" href="./css/table-filter.css">
+    <!-- Add your other CSS and JS includes here -->
+</head>
 <body>
-
-    <!--*******************
-        Preloader start
-    ********************-->
+    <!-- Preloader -->
     <div id="preloader">
         <div class="loader">
             <svg class="circular" viewBox="25 25 50 50">
@@ -50,61 +123,49 @@ if (isset($_GET['branchOfficeId']) && !empty($_GET['branchOfficeId'])) {
             </svg>
         </div>
     </div>
-    <!--*******************
-        Preloader end
-    ********************-->
 
-
-    <!--**********************************
-        Main wrapper start
-    ***********************************-->
+    <!-- Main wrapper -->
     <div id="main-wrapper">
-
         <?php include 'header.php'; ?>
 
-
-        <!--**********************************
-            Content body start
-        ***********************************-->
+        <!-- Content body -->
         <div class="content-body">
-
             <div class="container-fluid">
                 <div class="row justify-content-center">
                     <div class="col-lg-12">
                         <div class="card">
                             <div class="card-body">
+                                <?php if (isset($successMessage)): ?>
+                                    <div class="alert alert-success"><?php echo $successMessage; ?></div>
+                                <?php endif; ?>
+                                <?php if (isset($errorMessage)): ?>
+                                    <div class="alert alert-danger"><?php echo $errorMessage; ?></div>
+                                <?php endif; ?>
 
                                 <header class="panel-heading" style="text-align: center; font-size: 20px; color: #0c1211;">
                                     Branch Office Update
                                 </header>
                                 <div class="panel-body">
                                     <div class="position-center">
-                                        <form action=" " role="form" method="post" onsubmit="return validate()">
+                                        <form action="?branchOfficeId=<?php echo $branchOfficeId; ?>" role="form" method="post" onsubmit="return validateForm()">
                                             <div class="form-group">
-                                                <label for="branch-name">Branch Name<span
-                                                        class="mandatory-field text-danger">*</span></label>
-                                                <input type="text" required class="form-control" id="branch-name"
-                                                    placeholder="Enter Name" name="branch-name" readonly />
+                                                <label for="branch-name">Branch Name<span class="mandatory-field text-danger">*</span></label>
+                                                <input type="text" required class="form-control" id="branch-name" value="<?php echo $branchNameFromQry; ?>" name="branch-name" />
                                             </div>
                                             <div class="form-group">
                                                 <label for="branch-mobile">Mobile<span class="mandatory-field text-danger">*</span></label>
-                                                <input type="number" required class="form-control" id="branch-mobile" minlength="10" maxlength="10" oninput="this.value=this.value.slice(0,10)"
-                                                    placeholder="Enter Employee Mobile No" name="branch-mobile" />
+                                                <input type="number" required class="form-control" id="branch-mobile" minlength="10" maxlength="10" oninput="this.value=this.value.slice(0,10)" value="<?php echo $branchMobileFromQry; ?>" name="branch-mobile" />
                                             </div>
                                             <div class="form-group">
                                                 <label for="branch-alternative-mobile">Alternative Mobile</label>
-                                                <input type="number" class="form-control" id="branch-alternative-mobile" minlength="10" maxlength="10" oninput="this.value=this.value.slice(0,10)"
-                                                    placeholder="Enter Employee Mobile" name="branch-alternative-mobile" />
+                                                <input type="number" class="form-control" id="branch-alternative-mobile" minlength="10" maxlength="10" oninput="this.value=this.value.slice(0,10)" value="<?php echo $branchAlternativeMobileFromQry; ?>" name="branch-alternative-mobile" />
                                             </div>
                                             <div class="form-group">
-                                                <label for="branch-address">Address<span
-                                                        class="mandatory-field text-danger">*</span></label>
-                                                <textarea required class="form-control" id="branch-address" rows="4"
-                                                    placeholder="Enter Employee Address" name="branch-address"></textarea>
+                                                <label for="branch-address">Address<span class="mandatory-field text-danger">*</span></label>
+                                                <textarea required class="form-control" id="branch-address" rows="4" name="branch-address"><?php echo $addressFromQry; ?></textarea>
                                             </div>
                                             <div class="form-group">
-                                                <label for="branch-place">Place<span
-                                                        class="mandatory-field text-danger">*</span></label><br>
+                                                <label for="branch-place">Place<span class="mandatory-field text-danger">*</span></label><br>
                                                 <select class="form-control" id="branch-place" name="branch-place" required>
                                                     <option value="">-- SELECT PLACE --</option>
                                                     <?php
@@ -112,9 +173,8 @@ if (isset($_GET['branchOfficeId']) && !empty($_GET['branchOfficeId'])) {
                                                     if ($result = mysqli_query($conn, $selectCity)) {
                                                         if (mysqli_num_rows($result) > 0) {
                                                             while ($row = mysqli_fetch_array($result)) {
-                                                    ?>
-                                                                <option value="<?php echo $row['CITY_NAME'] ?>"><?php echo $row['CITY_NAME'] ?></option>
-                                                    <?php
+                                                                $selected = ($row['CITY_NAME'] == $placeFromQry) ? 'selected' : '';
+                                                                echo "<option value=\"" . htmlspecialchars($row['CITY_NAME']) . "\" $selected>" . htmlspecialchars($row['CITY_NAME']) . "</option>";
                                                             }
                                                         }
                                                     }
@@ -123,285 +183,213 @@ if (isset($_GET['branchOfficeId']) && !empty($_GET['branchOfficeId'])) {
                                             </div>
                                             <div class="form-group">
                                                 <label for="user-name">User Name<span class="mandatory-field text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="user-name" required
-                                                    placeholder="Enter User Name" name="user-name" />
+                                                <input type="text" class="form-control" id="user-name" required value="<?php echo $userNameFromQry; ?>" name="user-name" />
                                             </div>
                                             <div class="form-group">
                                                 <label for="password">Password<span class="mandatory-field text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="password" required
-                                                    placeholder="Enter Password" name="password" />
+                                                <input type="text" class="form-control" id="password" required value="<?php echo $passwordFromQry; ?>" name="password" />
                                             </div>
-                                            <div class="form-group ">
-                                                <label for="is_agent">Is Agent <span class="mandatory-field text-danger"></span></label>&nbsp;&nbsp;&nbsp;
-                                                <input type="checkbox" id="is_agent" />
+                                            <div class="form-group">
+                                                <label for="is_agent">Is Agent</label>&nbsp;&nbsp;&nbsp;
+                                                <input type="checkbox" id="is_agent" name="is_agent" <?php echo $isAgentFromQry ? 'checked' : ''; ?> />
                                             </div>
-                                            <script>
-                                                document.getElementById('is_agent').addEventListener('change', function() {
-                                                    if (this.checked) {
-                                                        document.getElementById('agent_details_box').style.display = 'block';
-                                                        document.getElementById('expense_section').style.display = 'none';
-                                                        document.getElementById('add_expense').style.display = 'none';
-                                                    } else {
-                                                        document.getElementById('agent_details_box').style.display = 'none';
-                                                        document.getElementById('expense_section').style.display = 'block';
-                                                        document.getElementById('add_expense').style.display = 'inline-block';
-                                                    }
-                                                });
-                                            </script>
-
 
                                             <!-- Agent commission input -->
-                                            <div id="agent_details_box" style="display: none;">
-                                                <div class="form-group">
-                                                    <label for="commission_percentage1">Commission Percentage %</label>
-                                                    <input type="text" class="form-control" id="commission" name="commission" />
-                                                </div>
-
-                                                <div class="form-group">
-                                                    <label for="commission_percentage2">Paid Commission Percentage %</label>
-                                                    <input type="text" class="form-control" id="paid_commission" name="paid_commission" />
-                                                </div>
-
-                                                <div class="form-group">
-                                                    <label for="commission_percentage3">ToPaid Commission Percentage %</label>
-                                                    <input type="text" class="form-control" id="total_commission" name="total_commission" />
+                                            <div id="agent_details_box" style="display: <?php echo $isAgentFromQry ? 'block' : 'none'; ?>;">
+                                                <div class="row">
+                                                    <div class="col-6">
+                                                        <div class="form-group">
+                                                            <label for="paid_commission">Paid Commission Percentage %</label>
+                                                            <input type="number" step="0.01" class="form-control" value="<?php echo $paidComissionFromQry; ?>" id="paid_commission" name="paid_commission" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="form-group">
+                                                            <label for="total_commission">ToPaid Commission Percentage %</label>
+                                                            <input type="number" step="0.01" class="form-control" value="<?php echo $totalComissionFromQry; ?>" id="total_commission" name="total_commission" />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
 
                                             <!-- Expense fields -->
-                                            <div id="expense_section">
+                                            <div id="expense_section" style="display: <?php echo !$isAgentFromQry ? 'block' : 'none'; ?>;">
                                                 <div class="form-group">
-                                                    <label for="">Expense</label>
-                                                    <input type="text" id="total_expense_amount" name="total_expense_amount" readonly class="form-control" />
-
+                                                    <label for="total_expense_amount">Total Expense</label>
+                                                    <input type="text" id="total_expense_amount" name="total_expense_amount" readonly class="form-control" value="<?php echo number_format($expenseAmountFromQry, 2); ?>" />
                                                 </div>
 
                                                 <!-- Add More Button -->
                                                 <div class="form-group text-center">
-                                                    <button type="button" id="add_expense" class="btn btn-secondary">
+                                                    <button type="button" id="add_expense" class="btn btn-secondary" style="display: <?php echo !$isAgentFromQry ? 'inline-block' : 'none'; ?>;">
                                                         <i class="fa fa-plus font-medium menu-icon"></i> Add Expense
                                                     </button>
                                                 </div>
                                                 <div class="row">
                                                     <div class="col-6">
-                                                        <label for="">DESCRIPTION</label>
+                                                        <label>DESCRIPTION</label>
                                                     </div>
                                                     <div class="col-6">
-                                                        <label for="">AMOUNT</label>
+                                                        <label>AMOUNT</label>
                                                     </div>
                                                 </div>
+                                                <?php if (!$isAgentFromQry): ?>
+                                                    <?php foreach ($expenseDescriptions as $expense): ?>
+                                                        <div class="row expense-row mt-2 align-items-end">
+                                                            <div class="col-md-5">
+                                                                <div class="form-group">
+                                                                    <input type="text" name="expense_description[]" value="<?php echo htmlspecialchars($expense['description'] ?? ''); ?>" placeholder="Enter description" class="form-control" />
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <input type="number" step="0.01" name="expense_amount[]" value="<?php echo htmlspecialchars($expense['amount'] ?? ''); ?>" placeholder="Enter amount" class="form-control" />
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-1">
+                                                                <div class="form-group">
+                                                                    <button type="button" class="btn btn-warning btn-sm clear-expense">
+                                                                        <i class="fa fa-eraser font-medium menu-icon"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-1">
+                                                                <div class="form-group">
+                                                                    <button type="button" class="btn btn-danger btn-sm delete-expense">
+                                                                        <i class="fa fa-minus font-medium menu-icon"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    <?php endforeach; ?>
+                                                <?php endif; ?>
                                             </div>
-<!-- Script -->
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Fill static fields
-        document.getElementById('branch-name').value = "<?php echo $branchNameFromQry; ?>";
-        document.getElementById('branch-mobile').value = "<?php echo $branchMobileFromQry; ?>";
-        document.getElementById('branch-alternative-mobile').value = "<?php echo $branchAlternativeMobileFromQry; ?>";
-        document.getElementById('branch-address').value = "<?php echo $addressFromQry; ?>";
-        document.getElementById('branch-place').value = "<?php echo $placeFromQry; ?>";
-        document.getElementById('user-name').value = "<?php echo $userNameFromQry; ?>";
-        document.getElementById('password').value = "<?php echo $passwordFromQry; ?>";
 
-        const isAgent = <?php echo $isAgentFromQry ? 'true' : 'false'; ?>;
-        document.getElementById('is_agent').checked = isAgent;
-
-        if (isAgent) {
-            document.getElementById('agent_details_box').style.display = 'block';
-            document.getElementById('expense_section').style.display = 'none';
-            document.getElementById('add_expense').style.display = 'none';
-
-            document.getElementById('commission').value = "<?php echo $comissionFromQry; ?>";
-            document.getElementById('paid_commission').value = "<?php echo $paidComissionFromQry; ?>";
-            document.getElementById('total_commission').value = "<?php echo $totalComissionFromQry; ?>";
-        } else {
-            document.getElementById('agent_details_box').style.display = 'none';
-            document.getElementById('expense_section').style.display = 'block';
-            document.getElementById('add_expense').style.display = 'inline-block';
-
-            const expenseItems = <?php echo json_encode($expenseDescriptions ?? []); ?>;
-
-            for (let i = 0; i < expenseItems.length; i++) {
-                const description = expenseItems[i].description || "";
-                const amount = expenseItems[i].amount || "";
-
-                addExpenseRow(description, amount);
-            }
-
-            calculateTotalExpense();
-        }
-
-        // Add expense button
-        const addExpenseBtn = document.getElementById('add_expense');
-        if (addExpenseBtn) {
-            addExpenseBtn.addEventListener('click', function () {
-                addExpenseRow('', '');
-            });
-        }
-    });
-
-    function addExpenseRow(description = '', amount = '') {
-        const newRow = document.createElement('div');
-        newRow.classList.add('row', 'expense-row', 'mt-2', 'align-items-end');
-
-        newRow.innerHTML = `
-            <div class="col-md-5">
-                <div class="form-group">
-                    <input type="text" name="expense_description[]" value="${description}" placeholder="Enter description" class="form-control" />
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="form-group">
-                    <input type="number" name="expense_amount[]" value="${amount}" placeholder="Enter amount" class="form-control" />
-                </div>
-            </div>
-            <div class="col-md-1">
-                <div class="form-group">
-                    <button type="button" class="btn btn-warning btn-sm clear-expense">
-                        <i class="fa fa-eraser font-medium menu-icon"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="col-md-1">
-                <div class="form-group">
-                    <button type="button" class="btn btn-danger btn-sm delete-expense">
-                        <i class="fa fa-minus font-medium menu-icon"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-
-        document.getElementById('expense_section').appendChild(newRow);
-
-        // Add event listeners
-        newRow.querySelector('.delete-expense').addEventListener('click', function () {
-            newRow.remove();
-            calculateTotalExpense();
-        });
-
-        newRow.querySelector('.clear-expense').addEventListener('click', function () {
-            const row = this.closest('.expense-row');
-            row.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => input.value = '');
-            calculateTotalExpense();
-        });
-
-        // Optional: Update total when typing in amount
-        const amountInput = newRow.querySelector('input[name="expense_amount[]"]');
-        amountInput.addEventListener('input', calculateTotalExpense);
-    }
-
-    function calculateTotalExpense() {
-        let total = 0;
-        document.querySelectorAll('input[name="expense_amount[]"]').forEach(input => {
-            const value = parseFloat(input.value);
-            if (!isNaN(value)) total += value;
-        });
-
-        const totalField = document.getElementById('total_expense_amount');
-        if (totalField) {
-            totalField.value = total.toFixed(2);
-        }
-    }
-</script>
-
-
-
-
-                                            <button class="btn btn-success" style="margin-left: 40%" onclick="updateBranchDetails()">
+                                            <button type="submit" class="btn btn-success" style="margin-left: 40%">
                                                 💾 Submit
                                             </button>
                                         </form>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-        </div> <!-- #/ container -->
-        <!--**********************************
-            Content body end
-        ***********************************-->
+        <?php include 'footer.php'; ?>
+    </div>
 
-        <?php include 'footer.php' ?>
+    <script>
+        // Toggle agent/expense sections
+        document.getElementById('is_agent').addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('agent_details_box').style.display = 'block';
+                document.getElementById('expense_section').style.display = 'none';
+                document.getElementById('add_expense').style.display = 'none';
+            } else {
+                document.getElementById('agent_details_box').style.display = 'none';
+                document.getElementById('expense_section').style.display = 'block';
+                document.getElementById('add_expense').style.display = 'inline-block';
+            }
+        });
 
-</body>
-<script type="text/javascript">
-    $(document).ready(function() {
-        $('#branch-name').val(<?php echo "'" . $branchNameFromQry . "'"; ?>);
-        $('#branch-mobile').val(<?php echo "'" . $branchMobileFromQry . "'"; ?>);
-        $('#branch-alternative-mobile').val(<?php echo "'" . $branchAlternativeMobileFromQry . "'"; ?>);
-        $('#branch-address').val(<?php echo "'" . str_replace('"', '', json_encode($addressFromQry)) . "'"; ?>);
-        $('#branch-place').val(<?php echo "'" . $placeFromQry . "'"; ?>);
-        $('#user-name').val(<?php echo "'" . $userNameFromQry . "'"; ?>);
-        $('#password').val(<?php echo "'" . $passwordFromQry . "'"; ?>);
-    });
+        // Add expense row
+        document.getElementById('add_expense')?.addEventListener('click', function() {
+            addExpenseRow('', '');
+        });
 
-
-    function updateBranchDetails() {
-        var branchOfficeId = <?php echo $branchOfficeId; ?>;
-        var branchName = $('#branch-name').val();
-        var branchMobile = $('#branch-mobile').val();
-        var branchEmail = $('#branch-email').val();
-        var branchAlternativeMobile = $('#branch-alternative-mobile').val();
-        var branchAddress = $('#branch-address').val();
-        var branchPlace = $('#branch-place').val();
-        var branchCity = $('#branch-city').val();
-        var userName = $('#user-name').val();
-        var password = $('#password').val();
-
-        if (branchName == "" || branchMobile == "" || branchAddress == "" || branchPlace == "" || userName == "" || password == "") {
-            alert("Please fill all required fields.");
-            return false;
-        } else {
-            $.ajax({
-                type: "POST",
-                url: "dataOperations.php",
-                data: {
-                    updateBranchDetails: 1,
-                    branchOfficeId: branchOfficeId,
-                    branchName: branchName,
-                    branchMobile: branchMobile,
-                    branchEmail: branchEmail,
-                    branchAlternativeMobile: branchAlternativeMobile,
-                    branchAddress: branchAddress,
-                    branchPlace: branchPlace,
-                    branchCity: branchCity,
-                    userName: userName,
-                    password: password,
-                    commission: $("#commission").val(),
-                    paidCommission: $("#paid_commission").val(),
-                    totalCommission: $("#total_commission").val(),
-                    expense: $("input[name='total_expense_amount']").map(function() {
-                        return $(this).val();
-                    }).get(),
-
-                    'expense_description[]': $("input[name='expense_description[]']").map(function() {
-                        return $(this).val();
-                    }).get(),
-                    'expense_amount[]': $("input[name='expense_amount[]']").map(function() {
-                        return $(this).val();
-                    }).get(),
-                    isAgent: $("#is_agent").is(":checked") ? 1 : 0
-                },
-                success: function(response) {
-
-                    if (response.toString().startsWith("Update Successful")) {
-                        alert('✔️ Branch Details Updated Successfully!');
-                        window.location.href = 'branchOfficeView.php';
-                    } else {
-                        alert('❌ Error updating Branch Details: ' + response);
-                    }
-
-                },
-                error: function() {
-                    alert("Error updating branch details.");
+        // Delete expense row
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('delete-expense') || e.target.closest('.delete-expense')) {
+                const row = e.target.closest('.expense-row');
+                if (row) {
+                    row.remove();
+                    calculateTotalExpense();
                 }
+            }
+            
+            if (e.target.classList.contains('clear-expense') || e.target.closest('.clear-expense')) {
+                const row = e.target.closest('.expense-row');
+                if (row) {
+                    row.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => input.value = '');
+                    calculateTotalExpense();
+                }
+            }
+        });
+
+        // Calculate total expense
+        function calculateTotalExpense() {
+            let total = 0;
+            document.querySelectorAll('input[name="expense_amount[]"]').forEach(input => {
+                const value = parseFloat(input.value) || 0;
+                total += value;
             });
+            document.getElementById('total_expense_amount').value = total.toFixed(2);
         }
-    }
+
+        // Form validation
+        function validateForm() {
+            // Basic validation - you can add more specific checks
+            const branchMobile = document.getElementById('branch-mobile').value;
+            if (branchMobile.length !== 10) {
+                alert('Mobile number must be 10 digits');
+                return false;
+            }
+            
+            const altMobile = document.getElementById('branch-alternative-mobile').value;
+            if (altMobile && altMobile.length !== 10) {
+                alert('Alternative mobile number must be 10 digits if provided');
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Add new expense row
+        function addExpenseRow(description = '', amount = '') {
+            const newRow = document.createElement('div');
+            newRow.classList.add('row', 'expense-row', 'mt-2', 'align-items-end');
+            newRow.innerHTML = `
+                <div class="col-md-5">
+                    <div class="form-group">
+                        <input type="text" name="expense_description[]" value="${description}" placeholder="Enter description" class="form-control" />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <input type="number" step="0.01" name="expense_amount[]" value="${amount}" placeholder="Enter amount" class="form-control" />
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <div class="form-group">
+                        <button type="button" class="btn btn-warning btn-sm clear-expense">
+                            <i class="fa fa-eraser font-medium menu-icon"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <div class="form-group">
+                        <button type="button" class="btn btn-danger btn-sm delete-expense">
+                            <i class="fa fa-minus font-medium menu-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('expense_section').appendChild(newRow);
+            
+            // Add input event for the new amount field
+            newRow.querySelector('input[name="expense_amount[]"]').addEventListener('input', calculateTotalExpense);
+        }
+    </script>
+</body>
+</html>
+<script type="text/javascript">
+
+
+
+    
 </script>
 
 

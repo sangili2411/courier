@@ -1,25 +1,10 @@
 <?php
-session_start();
 include 'dbConn.php';
 
 date_default_timezone_set('Asia/Kolkata');
 $date_1 = date('d-m-Y H:i');
 $date = date('Y-m-d', strtotime($date_1));
 
-$sql = "SELECT BD.BOOKING_DATE, BD.CUSTOMER, BD.LR_NUMBER, BD.FROM_PLACE, BD.TO_PLACE,
-        BD.BOOKING_ID, BD.FROM_MOBILE, BD.TO_MOBILE, BD.DELIVERY_TO, BD.SHIPMENT_VIA
-        FROM booking_details BD
-        WHERE BD.BOOKING_STAUTS = 2";
-$whereSql = "";
-$userName = $_SESSION['userName'];
-$branchName = $_SESSION['admin'];
-if (strtolower($userName) == strtolower('admin')) {
-    // Nothing
-} else {
-    $whereSql = " AND TO_PLACE = '$branchName' ";
-    $sql = $sql . $whereSql;
-}
-$sql = $sql . " ORDER BY BOOKING_DATE";
 
 ?>
 
@@ -139,7 +124,25 @@ $sql = $sql . " ORDER BY BOOKING_DATE";
     ***********************************-->
     <div id="main-wrapper">
 
-        <?php include 'header2.php'; ?>
+        <?php include 'header.php';
+        
+        $sql = "SELECT BD.BOOKING_DATE, BD.CUSTOMER, BD.LR_NUMBER, BD.FROM_PLACE, BD.TO_PLACE,
+        BD.BOOKING_ID, BD.FROM_MOBILE, BD.TO_MOBILE, BD.DELIVERY_TO, BD.SHIPMENT_VIA
+        FROM booking_details BD
+        WHERE BD.BOOKING_STAUTS = 2";
+$whereSql = "";
+$userName = $_SESSION['userName'];
+$branchName = $_SESSION['admin'];
+if (strtolower($userName) == strtolower('admin')) {
+    // Nothing
+} else {
+    $whereSql = " AND TO_PLACE = '$branchName' ";
+    $sql = $sql . $whereSql;
+}
+$sql = $sql . " ORDER BY BOOKING_DATE";
+
+        
+        ?>
 
         <!--**********************************
             Content body start
@@ -410,7 +413,9 @@ $sql = $sql . " ORDER BY BOOKING_DATE";
             },
             success: function(response) {
                 if (response.toString().includes("Success")) {
+
                     $('.invoice-id-' + bookingId).addClass("move-success");
+                    window.location.reload();
                 }
             }
         });
@@ -428,6 +433,8 @@ $sql = $sql . " ORDER BY BOOKING_DATE";
             success: function(response) {
                 if (response.toString().includes("Success")) {
                     $('.invoice-id-' + bookingId).addClass("move-success");
+                    window.location.reload();
+
                 }
             }
         });

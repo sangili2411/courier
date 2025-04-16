@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -60,218 +59,239 @@
 
                                     <div class="panel-body">
                                         <div class="position-center">
-                                            <form action="" role="form" method="post">
-                                                <div class="form-group">
-                                                    <label for="branch-name">Branch Name<span class="mandatory-field text-danger">*</span></label>
-                                                    <input type="text" required class="form-control" id="branch-name"
-                                                        placeholder="Enter Name" name="branch-name" />
-                                                </div>
-                                                <div class="form-group">
-                                                    <label for="branch-mobile">Mobile<span class="mandatory-field  text-danger">*</span></label>
-                                                    <input type="number" required class="form-control" id="branch-mobile" minlength="10" maxlength="10" oninput="this.value=this.value.slice(0,10)"
-                                                        placeholder="Enter Employee Mobile No" name="branch-mobile" />
-                                                </div>
-                                                <div class="form-group">
-                                                    <label for="branch-alternative-mobile">Alternative Mobile</label>
-                                                    <input type="number" class="form-control" id="branch-alternative-mobile" minlength="10" maxlength="10" oninput="this.value=this.value.slice(0,10)"
-                                                        placeholder="Enter Employee Mobile" name="branch-alternative-mobile" />
-                                                </div>
-                                                <div class="form-group">
-                                                    <label for="branch-address">Address<span class="mandatory-field  text-danger">*</span></label>
-                                                    <textarea required class="form-control" id="branch-address" rows="4"
-                                                        placeholder="Enter Employee Address" name="branch-address"></textarea>
-                                                </div>
-                                                <div class="form-group">
-                                                    <label for="branch-place">Place<span class="mandatory-field  text-danger">*</span></label><br>
-                                                    <select class="form-control" id="branch-place" name="branch-place" required>
-                                                        <option value="">-- SELECT PLACE --</option>
-                                                        <?php
-                                                        $selectCity = "SELECT DISTINCT CITY_NAME FROM city ORDER BY 1";
-                                                        if ($result = mysqli_query($conn, $selectCity)) {
-                                                            if (mysqli_num_rows($result) > 0) {
-                                                                while ($row = mysqli_fetch_array($result)) {
-                                                        ?>
-                                                                    <option value="<?php echo $row['CITY_NAME'] ?>"><?php echo $row['CITY_NAME'] ?></option>
-                                                        <?php
-                                                                }
+
+                                            <div class="form-group">
+                                                <label for="branch-name">Branch Name<span class="mandatory-field text-danger">*</span></label>
+                                                <input type="text" required class="form-control" id="branch-name"
+                                                    placeholder="Enter Branch Name" name="branch-name" />
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="branch-mobile">Mobile<span class="mandatory-field  text-danger">*</span></label>
+                                                <input type="number" required class="form-control" id="branch-mobile" minlength="10" maxlength="10" oninput="this.value=this.value.slice(0,10)"
+                                                    placeholder="Enter Mobile No" name="branch-mobile" />
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="branch-alternative-mobile">Alternative Mobile</label>
+                                                <input type="number" class="form-control" id="branch-alternative-mobile" minlength="10" maxlength="10" oninput="this.value=this.value.slice(0,10)"
+                                                    placeholder="Enter Alternative Mobile" name="branch-alternative-mobile" />
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="branch-address">Address<span class="mandatory-field  text-danger">*</span></label>
+                                                <textarea required class="form-control" id="branch-address" rows="4"
+                                                    placeholder="Enter Address" name="branch-address"></textarea>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="branch-place">Place<span class="mandatory-field  text-danger">*</span></label><br>
+                                                <select class="form-control" id="branch-place" name="branch-place" required>
+                                                    <option value="">-- SELECT PLACE --</option>
+                                                    <?php
+                                                    $selectCity = "SELECT DISTINCT CITY_NAME FROM city ORDER BY 1";
+                                                    if ($result = mysqli_query($conn, $selectCity)) {
+                                                        if (mysqli_num_rows($result) > 0) {
+                                                            while ($row = mysqli_fetch_array($result)) {
+                                                    ?>
+                                                                <option value="<?php echo $row['CITY_NAME'] ?>"><?php echo $row['CITY_NAME'] ?></option>
+                                                    <?php
                                                             }
                                                         }
-                                                        ?>
-                                                    </select>
+                                                    }
+                                                    ?>
+                                                </select>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label for="user-name">User Name<span class="mandatory-field  text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="user-name" required
+                                                    placeholder="Enter User Name" name="user-name" />
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="password">Password<span class="mandatory-field  text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="password" required
+                                                    placeholder="Enter Password" name="password" />
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label for="is_agent">Is Agent <span class="mandatory-field text-danger"></span></label>&nbsp;&nbsp;&nbsp;
+                                                <input type="checkbox" id="is_agent" />
+                                            </div>
+
+                                            <!-- Agent commission input -->
+                                            <div id="agent_details_box" style="display: none;">
+                                                <div class="row">
+                                                    <div class="col-6">
+                                                        <div class="form-group">
+                                                            <label for="commission_percentage2">Booking Commission Percentage %</label>
+                                                            <input type="number" class="form-control" id="booking_commission" value="15" name="paid_commission" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="form-group">
+                                                            <label for="commission_percentage3">Received Commission Percentage %</label>
+                                                            <input type="number" class="form-control" id="recived_commission" value="5" name="total_commission" />
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <!-- <div class="form-group">
-                                                     <label for="user-name">Invoice Prefix<span class="mandatory-field">*</span></label>
-                                                       <input type="text" class="form-control" id="invoice-prefix" required
-                                                          placeholder="Enter Invoice Prefix" name="invoice-prefix" />
-                                                         </div> -->
+                                            </div>
+
+                                            <!-- Expense fields -->
+                                            <div id="expense_section">
                                                 <div class="form-group">
-                                                    <label for="user-name">User Name<span class="mandatory-field  text-danger">*</span></label>
-                                                    <input type="text" class="form-control" id="user-name" required
-                                                        placeholder="Enter User Name" name="user-name" />
-                                                </div>
-                                                <div class="form-group">
-                                                    <label for="password">Password<span class="mandatory-field  text-danger">*</span></label>
-                                                    <input type="text" class="form-control" id="password" required
-                                                        placeholder="Enter Password" name="password" />
+                                                    <label for="">Expense</label>
+                                                    <input type="text" class="form-control" readonly placeholder="Expense" name="expense[]" id="expense" value="Expense" />
                                                 </div>
 
-                                                <div class="form-group ">
-                                                    <label for="is_agent">Is Agent <span class="mandatory-field text-danger"></span></label>&nbsp;&nbsp;&nbsp;
-                                                    <input type="checkbox" id="is_agent" />
+                                              
+
+                                                <!-- Add More Button -->
+                                                <div class="form-group text-center">
+                                                    <button type="button" id="add_expense" class="btn btn-secondary">
+                                                        <i class="fa fa-plus font-medium menu-icon"></i> Add Expense
+                                                    </button>
                                                 </div>
 
-
-                                                <!-- Agent commission input -->
-                                                <div id="agent_details_box" style="display: none;">
-                                                    <div class="row">
-                                                        <div class="col-6">
-                                                            <div class="form-group">
-                                                                <label for="commission_percentage2">Booking Commission Percentage %</label>
-                                                                <input type="text" class="form-control" id="booking_commission" name="paid_commission" />
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-6">
-                                                            <div class="form-group">
-                                                                <label for="commission_percentage3">Recived Commission Percentage %</label>
-                                                                <input type="text" class="form-control" id="recived_commission" name="total_commission" />
-                                                            </div>
-                                                        </div>
+                                                <div class="row">
+                                                    <div class="col-6">
+                                                        <label for="">DESCRIPTION</label>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label for="">AMOUNT</label>
                                                     </div>
                                                 </div>
+                                            </div>
+                                              <!-- ✅ Container for dynamic rows -->
+                                              <div id="expense_rows_container"></div>
 
-                                                <!-- Expense fields -->
-                                                <div id="expense_section">
-                                                    <div class="form-group">
-                                                        <label for="">Expense</label>
-                                                        <input type="text" class="form-control" readonly placeholder="Expense" name="expense[]" id="expense" value="Expense" />
-                                                    </div>
+                                            <script>
+                                                const isAgentCheckbox = document.getElementById('is_agent');
+                                                const agentDetailsBox = document.getElementById('agent_details_box');
+                                                const expenseSection = document.getElementById('expense_section');
+                                                const addExpenseBtn = document.getElementById('add_expense');
+                                                const expenseContainer = document.getElementById('expense_rows_container');
 
-                                                    <!-- Add More Button -->
-                                                    <div class="form-group text-center">
-                                                        <button type="button" id="add_expense" class="btn btn-secondary">
-                                                            <i class="fa fa-plus font-medium menu-icon"></i> Add Expense
-                                                        </button>
-                                                    </div>
-                                                    <div class="row">
-                                                        <div class="col-6">
-                                                            <label for="">DESCRIPTION</label>
-                                                        </div>
-                                                        <div class="col-6">
-                                                            <label for="">AMOUNT</label>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                const bookingCommission = document.getElementById('booking_commission');
+                                                const recivedCommission = document.getElementById('recived_commission');
 
+                                                isAgentCheckbox.addEventListener('change', function() {
+                                                    if (this.checked) {
+                                                        agentDetailsBox.style.display = 'block';
+                                                        expenseSection.style.display = 'none';
+                                                        addExpenseBtn.style.display = 'none';
 
+                                                        bookingCommission.required = true;
+                                                        recivedCommission.required = true;
 
+                                                        const expenseRows = document.querySelectorAll('.expense-row');
+                                                        expenseRows.forEach(row => {
+                                                            row.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => {
+                                                                input.value = '';
+                                                            });
+                                                        });
+                                                        calculateTotalExpense();
+                                                    } else {
+                                                        agentDetailsBox.style.display = 'none';
+                                                        expenseSection.style.display = 'block';
+                                                        addExpenseBtn.style.display = 'inline-block';
 
+                                                        bookingCommission.required = false;
+                                                        recivedCommission.required = false;
+                                                        bookingCommission.value = '';
+                                                        recivedCommission.value = '';
+                                                    }
+                                                });
 
+                                                document.querySelector('form')?.addEventListener('submit', function(e) {
+                                                    if (!isAgentCheckbox.checked) {
+                                                        bookingCommission.disabled = true;
+                                                        recivedCommission.disabled = true;
+                                                    }
+                                                });
 
-                                                <!-- Script -->
-                                                <script>
-                                                    const isAgentCheckbox = document.getElementById('is_agent');
-                                                    const agentDetailsBox = document.getElementById('agent_details_box');
-                                                    const expenseSection = document.getElementById('expense_section');
-                                                    const addExpenseBtn = document.getElementById('add_expense');
-
-                                                    isAgentCheckbox.addEventListener('change', function() {
-                                                        if (this.checked) {
-                                                            agentDetailsBox.style.display = 'block';
-                                                            expenseSection.style.display = 'none';
-                                                            addExpenseBtn.style.display = 'none';
-                                                        } else {
-                                                            agentDetailsBox.style.display = 'none';
-                                                            expenseSection.style.display = 'block';
-                                                            addExpenseBtn.style.display = 'inline-block';
-                                                        }
+                                                function calculateTotalExpense() {
+                                                    let total = 0;
+                                                    const amountFields = document.querySelectorAll('input[name="expense_amount[]"]');
+                                                    amountFields.forEach(field => {
+                                                        const val = parseFloat(field.value);
+                                                        if (!isNaN(val)) total += val;
                                                     });
 
-                                                    // Function to recalculate total expense
-                                                    function calculateTotalExpense() {
-                                                        let total = 0;
-                                                        const amountFields = document.querySelectorAll('input[name="expense_amount[]"]');
-                                                        amountFields.forEach(field => {
-                                                            const val = parseFloat(field.value);
-                                                            if (!isNaN(val)) total += val;
-                                                        });
-                                                        const expenseInputs = document.querySelectorAll('input[name="expense[]"]');
-                                                        expenseInputs.forEach(input => input.value = total.toFixed(2));
-                                                    }
+                                                    const expenseInputs = document.querySelectorAll('input[name="expense[]"]');
+                                                    expenseInputs.forEach(input => input.value = total.toFixed(2));
+                                                }
 
-                                                    // Attach event listener to dynamically added fields
-                                                    function attachAmountListeners() {
-                                                        const amountFields = document.querySelectorAll('input[name="expense_amount[]"]');
-                                                        amountFields.forEach(field => {
-                                                            field.removeEventListener('input', calculateTotalExpense);
-                                                            field.addEventListener('input', calculateTotalExpense);
-                                                        });
-                                                    }
+                                                function attachAmountListeners() {
+                                                    const amountFields = document.querySelectorAll('input[name="expense_amount[]"]');
+                                                    amountFields.forEach(field => {
+                                                        field.removeEventListener('input', calculateTotalExpense);
+                                                        field.addEventListener('input', calculateTotalExpense);
+                                                    });
+                                                }
 
-                                                    // Attach listeners initially
+                                                addExpenseBtn.addEventListener('click', function() {
+                                                    const newRow = document.createElement('div');
+                                                    newRow.classList.add('row', 'expense-row', 'mt-2', 'align-items-end');
+
+                                                    newRow.innerHTML = `
+            <div class="col-md-5">
+                <div class="form-group">
+                    <input type="text" name="expense_description[]" placeholder="Enter description" class="form-control" />
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    <input type="number" name="expense_amount[]" placeholder="Enter amount" class="form-control" />
+                </div>
+            </div>
+
+            <div class="col-md-1">
+                <div class="form-group">
+                    <button type="button" class="btn btn-warning btn-sm clear-expense">
+                        <i class="fa fa-eraser font-medium menu-icon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-md-1">
+                <div class="form-group">
+                    <button type="button" class="btn btn-danger btn-sm delete-expense">
+                        <i class="fa fa-minus font-medium menu-icon"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+
+                                                    // ✅ Append to the dynamic container
+                                                    expenseContainer.appendChild(newRow);
+
+                                                    // Attach listeners
                                                     attachAmountListeners();
 
-                                                    addExpenseBtn.addEventListener('click', function() {
-                                                        const newRow = document.createElement('div');
-                                                        newRow.classList.add('row', 'expense-row', 'mt-2', 'align-items-end');
-
-                                                        newRow.innerHTML = `
-       
-        
-                                                               <div class="col-md-5">
-                                                                  <div class="form-group">
-                                                               <input type="text" name="expense_description[]" placeholder="Enter description"  class="form-control" />
-                                                                                 </div>
-                                                                          </div>
-
-                                                                               <div class="col-md-4">
-                                                                      <div class="form-group">
-                                                                          <input type="number" name="expense_amount[]" placeholder="Enetr amount" class="form-control" />
-                                                                    </div>
-                                                                 </div>
-                                                               <div class="col-md-1">
-                                                                 <div class="form-group">
-                                                              <button type="button" class="btn btn-warning btn-sm clear-expense"><i class="fa fa-eraser font-medium menu-icon"></i></button>
-           
-                                                                       </div>
-                                                                         </div>
-
-
-                                                             <div class="col-md-1">
-                                                              <div class="form-group">
-                                                              <button type="button" class="btn btn-danger btn-sm delete-expense"><i class="fa fa-minus font-medium menu-icon"></i></button>
-           
-                                                         </div>
-                                                           </div>
- 
-      
-          
-                                                             `;
-
-                                                        expenseSection.appendChild(newRow);
-                                                        attachAmountListeners();
-
-                                                        newRow.querySelector('.delete-expense').addEventListener('click', function() {
-                                                            newRow.remove();
-                                                            calculateTotalExpense();
-                                                        });
-
-
-                                                        newRow.querySelector('.clear-expense').addEventListener('click', function() {
-                                                            const row = this.closest('.expense-row');
-                                                            row.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => input.value = '');
-                                                            calculateTotalExpense();
-                                                        });
-
+                                                    // Delete Row
+                                                    newRow.querySelector('.delete-expense').addEventListener('click', function() {
+                                                        newRow.remove();
+                                                        calculateTotalExpense();
                                                     });
-                                                </script>
+
+                                                    // Clear Row
+                                                    newRow.querySelector('.clear-expense').addEventListener('click', function() {
+                                                        const row = this.closest('.expense-row');
+                                                        row.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => input.value = '');
+                                                        calculateTotalExpense();
+                                                    });
+                                                });
+
+                                                // Call initially on page load for static rows (if any)
+                                                attachAmountListeners();
+                                            </script>
 
 
 
-                                                <button class="btn btn-success" style="margin-left: 40%" onclick="addBranchDetails()">
-                                                    <div class="fa fa-floppy-o font-medium menu-icon " aria-hidden="true"></div>
-                                                    &nbsp; Submit
-                                                </button>
-                                            </form>
+
+                                            <button class="btn btn-success" style="margin-left: 40%" onclick="addBranchDetails()">
+                                                <div class="fa fa-floppy-o font-medium menu-icon " aria-hidden="true"></div>
+                                                &nbsp; Submit
+                                            </button>
+
                                         </div>
                                     </div>
 
@@ -322,10 +342,7 @@
                 id: "branch-mobile",
                 msg: "❌ Please Enter Mobile No!"
             },
-            {
-                id: "branch-alternative-mobile",
-                msg: "❌ Please Enter Alternative Mobile No!"
-            },
+
             {
                 id: "branch-address",
                 msg: "❌ Please Enter Address!"
@@ -365,7 +382,7 @@
                 userName: $("#user-name").val(),
                 password: $("#password").val(),
                 bookingCommission: $("#booking_commission").val(),
-                recivedCommission: $("#recived_commission").val(),
+                receivedCommission: $("#recived_commission").val(),
                 expense: $("input[name='expense[]']").map(function() {
                     return $(this).val();
                 }).get(),
@@ -385,14 +402,16 @@
                     window.location.reload();
                 } else if (
 
-                    response.toString() == "BRANCH_ALREADY_EXISTS" ||
+                    response.toString() == "BRANCH_NAME_ALREADY_EXISTS" ||
                     response.toString() == "USER_NAME_ALREADY_EXISTS" ||
                     response.toString() == "BRANCH_MOBILE_ALREADY_EXISTS"
+
                 ) {
                     let errorMsg = {
-                        "BRANCH_ALREADY_EXISTS": "❌ Branch Already Exists!",
+                        "BRANCH_NAME_ALREADY_EXISTS": "❌ Branch Already Exists!",
                         "USER_NAME_ALREADY_EXISTS": "❌ User Name Already Exists!",
-                        "BRANCH_MOBILE_ALREADY_EXISTS": "❌ Mobile No Already Exists!"
+                        "BRANCH_MOBILE_ALREADY_EXISTS": "❌ Mobile Number Already Exists!",
+
                     } [response.toString()];
                     alert(errorMsg);
                 } else if (response.toString() == "DB_ERROR") {

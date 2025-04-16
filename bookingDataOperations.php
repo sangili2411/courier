@@ -305,6 +305,7 @@ if (isset($_POST['moveToShipOutward'])) {
     $bookingId = $_POST['bookingId'];
     $driverDetails = $_POST['driverDetails'];
     $shipmentVia = $_POST['shipmentVia'];
+    $shipmentVia = $_POST['shipmentVia'];
     $bookingStatus = $shipmentVia == "Via_Coimbatore" ? 1 : 2;
     $showInShipOutward = $shipmentVia == "Via_Coimbatore" ? 1 : 0;
 
@@ -332,10 +333,11 @@ if (isset($_POST['moveToShipOutward'])) {
 
             $driverName = $driverDetailsJson['DRIVER_NAME'];
             $driverMobile = $driverDetailsJson['DRIVER_MOBILE'];
+            $advanceAmount = $driverDetailsJson['ADVANCE_AMOUNT'];
             $updateDriverDetailsQuery = "INSERT INTO driver_details (DRIVER_NAME, MOBILE)
-                                            SELECT * FROM (SELECT '$driverName', '$driverMobile') AS tmp
+                                            SELECT * FROM (SELECT '$driverName', '$driverMobile',$advanceAmount) AS tmp
                                             WHERE NOT EXISTS (
-                                                SELECT DRIVER_NAME, MOBILE FROM driver_details WHERE DRIVER_NAME = '$driverName' AND MOBILE = '$driverMobile'
+                                                SELECT DRIVER_NAME, MOBILE FROM driver_details WHERE DRIVER_NAME = '$driverName' AND MOBILE = '$driverMobile' AND ADVANCE_AMOUNT = '$advanceAmount'
                                             ) LIMIT 1
                                         ";
             mysqli_query($conn, $updateDriverDetailsQuery);
@@ -397,27 +399,27 @@ if (isset($_POST['revertShipOutward'])) {
 
     try {
         /* Update the booking_status in booking_details */
-        $data = array(
-            'BOOKING_STAUTS' => 0,
-        );
-        $where = array('BOOKING_ID' => $bookingId);
-        echo $dbOperator->updateData("booking_details", $data, $where);
+        // $data = array(
+        //     'BOOKING_STAUTS' => 0,
+        // );
+        // $where = array('BOOKING_ID' => $bookingId);
+        // echo $dbOperator->updateData("booking_details", $data, $where);
 
-        // echo $updateQuery = "UPDATE booking_details SET BOOKING_STAUTS = 0 WHERE BOOKING_ID = $bookingId";
-        // if (isset($conn)) {
-        //     mysqli_query($conn, $updateQuery);
-        //     print_r("Success");
-        // }
+        echo $updateQuery = "UPDATE booking_details SET BOOKING_STAUTS = 4 WHERE BOOKING_ID = $bookingId";
+        if (isset($conn)) {
+            mysqli_query($conn, $updateQuery);
+            print_r("Success");
+        }
         /* Delete the existing records in shipment_details */
 
 
-        echo $updateQuery = $dbOperator->deleteRecord("shipment_details", ["BOOKING_ID" => $bookingId]);
+        // echo $updateQuery = $dbOperator->deleteRecord("shipment_details", ["BOOKING_ID" => $bookingId]);
 
-        // echo $updateQuery = "DELETE FROM shipment_details WHERE BOOKING_ID = $bookingId";
-        // if (isset($conn)) {
-        //     mysqli_query($conn, $updateQuery);
-        //     print_r("Success");
-        // }
+        echo $updateQuery = "DELETE FROM shipment_details WHERE BOOKING_ID = $bookingId";
+        if (isset($conn)) {
+            mysqli_query($conn, $updateQuery);
+            print_r("Success");
+        }
     } catch (Exception $e) {
         print_r("Error: " . $e);
     }

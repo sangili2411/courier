@@ -170,10 +170,9 @@
     let validateAndSaveRecords = function() {
         let place = $("#place").val();
         if (place == undefined || place == null || place == "") {
-            alert("❌ Member Name is mandatory!");
+            alert("❌ Place Name is mandatory!");
             return false;
         }
-
 
         $.ajax({
             url: "dataOperations.php",
@@ -184,18 +183,21 @@
 
             },
             success: function(response) {
-                console.log("Response from server:", response);
-                if (response.toString() == "Insert Successful") {
-                    alert("✔️ Place Added Successfully!");
-                    window.location.reload();
-                } else if (response.toString() == "PLACE_ALREADY_EXISTS") {
-                    alert("❌ Place is Already Exists.");
-                    return false;
-                } else {
-                    alert("🚨 Some error had occured. \nPlease try again");
-                    return false;
-                }
-            }
+    console.log("Response from server:", response);
+    response = response.toString().trim(); 
+
+    if (response.startsWith("Insert Successful")) {
+        alert("✔️ Place Added Successfully!");
+        window.location.reload();
+    } else if (response === "PLACE_ALREADY_EXISTS") {
+        alert("❌ Place Already Exists.");
+        return false;
+    } else {
+        alert("🚨 Some error had occurred. \nPlease try again");
+        return false;
+    }
+}
+
         });
     }
 

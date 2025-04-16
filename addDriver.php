@@ -63,7 +63,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="member-name">Mobile Number: <span class="mandatory-astrick">*</span></label>
-                                                <input type="text" class="form-control" id="mobile" placeholder="Enter Mobile No" minlength="10" maxlength="10" oninput="this.value=this.value.slice(0,10)">
+                                                <input type="number" class="form-control" id="mobile" placeholder="Enter Mobile No" minlength="10" maxlength="10" oninput="this.value=this.value.slice(0,10)">
                                             </div>
                                         </div>
                                         <div class="col-md-6">
@@ -75,21 +75,16 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="member-name">Vehicle Number: <span class="mandatory-astrick">*</span></label>
-                                                <input type="text" class="form-control" id="vehicle-number" placeholder="Enter Vehicle Number">
+                                                <input type="text" class="form-control" id="vehicle-number"   placeholder="Enter Vehicle Number">
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label for="member-name">Vehicle Description: <span class="mandatory-astrick">*</span></label>
+                                                <label for="member-name">Vehicle Description:</label>
                                                 <input type="text" class="form-control" id="description" placeholder="Enter Vehicle Description">
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label for="member-name">Advance Amount: <span class="mandatory-astrick">*</span></label>
-                                                <input type="number" class="form-control" id="advance-amount" placeholder="Enter Advance Amount">
-                                            </div>
-                                        </div>
+                                       
                                     </div>
                                     <div class="form-group flex-grow-1 text-center">
                                         <button type="button" class="btn btn-success" onclick="addDriver()">
@@ -107,14 +102,14 @@
                                                     <th class="w3-select">License</th>
                                                     <th class="w3-select">Vehicle Number</th>
                                                     <th class="w3-select">Vehicle description</th>
-                                                    <th class="w3-select">Advance Amount</th>
+
 
                                                     <th class="skip-filter">Edit</th>
                                                     <th class="skip-filter">Delete</th>
                                                 </tr>
                                             </thead>
                                             <?php
-                                            $driverDetailsSql = 'SELECT DRIVER_NAME, MOBILE, LICENSE, DRIVER_ID, VEHICLE_NUMBER, VEHICLE_DESCRIPTION, ADVANCE_AMOUNT    FROM driver_details ORDER BY 1';
+                                            $driverDetailsSql = 'SELECT DRIVER_NAME, MOBILE, LICENSE, DRIVER_ID, VEHICLE_NUMBER, VEHICLE_DESCRIPTION    FROM driver_details ORDER BY 1';
                                             $i = 1;
                                             if ($result = mysqli_query($conn, $driverDetailsSql)) {
                                                 if (mysqli_num_rows($result) > 0) {
@@ -129,12 +124,12 @@
                                                                 <td style="color:#0c1211"><?php echo $row['LICENSE'] ?></td>
                                                                 <td style="color:#0c1211"><?php echo $row['VEHICLE_NUMBER'] ?></td>
                                                                 <td style="color:#0c1211"><?php echo $row['VEHICLE_DESCRIPTION'] ?></td>
-                                                                <td style="color:#0c1211"><?php echo $row['ADVANCE_AMOUNT'] ?></td>
+                                                       
 
 
 
                                                                 <td>
-                                                                    <a class="a-edit-icon" data-id="<?php echo $row['DRIVER_ID']; ?>" data-name="<?php echo htmlspecialchars($row['DRIVER_NAME']); ?>" data-mobile="<?php echo htmlspecialchars($row['MOBILE']); ?>" data-license="<?php echo htmlspecialchars($row['LICENSE']); ?>" data-vehicleno="<?php echo htmlspecialchars($row['VEHICLE_NUMBER']); ?>" data-description="<?php echo htmlspecialchars($row['VEHICLE_DESCRIPTION']); ?>" data-advance="<?php echo htmlspecialchars($row['ADVANCE_AMOUNT']); ?>" onclick="EditRecords(this)">
+                                                                    <a class="a-edit-icon" data-id="<?php echo $row['DRIVER_ID']; ?>" data-name="<?php echo htmlspecialchars($row['DRIVER_NAME']); ?>" data-mobile="<?php echo htmlspecialchars($row['MOBILE']); ?>" data-license="<?php echo htmlspecialchars($row['LICENSE']); ?>" data-vehicleno="<?php echo htmlspecialchars($row['VEHICLE_NUMBER']); ?>" data-description="<?php echo htmlspecialchars($row['VEHICLE_DESCRIPTION']); ?>" onclick="EditRecords(this)">
                                                                         <i class="fa fa-pencil font-x-large" aria-hidden="true"></i>
                                                                     </a>
                                                                 </td>
@@ -187,10 +182,7 @@
                                                             <label for="driver-license">Vehicle description</label>
                                                             <input type="text" class="form-control" id="edit-description">
                                                         </div>
-                                                        <div class="form-group">
-                                                            <label for="driver-license">Advance Amount</label>
-                                                            <input type="number" class="form-control" id="edit-advance">
-                                                        </div>
+                                                       
 
 
                                                         <div class="modal-footer">
@@ -241,9 +233,9 @@
         let driverLicense = $('#license').val();
         let vehicleno = $('#vehicle-number').val();
         let description = $('#description').val();
-        let advance = $('#advance-amount').val();
+       
 
-        if (driverName == "" || driverMobile == "" || driverLicense == "" || vehicleno == "" || description == "" || advance == "") {
+        if (driverName == "" || driverMobile == "" || driverLicense == "" || vehicleno == "") {
             alert("⚠️  Please fill all the fields!");
             return false;
         } else {
@@ -257,7 +249,7 @@
                     driverLicense: driverLicense,
                     vehicleno: vehicleno,
                     description: description,
-                    advance: advance
+                    
                 },
                 success: function(response) {
                     console.log("Server response:", response);
@@ -284,7 +276,7 @@
         let driverLicense = $(button).attr('data-license');
         let vehicleno = $(button).attr('data-vehicleno');
         let description = $(button).attr('data-description');
-        let advance = $(button).attr('data-advance');
+ 
 
 
         // Set the values in the modal inputs
@@ -294,7 +286,7 @@
         $('#editdriver-license').val(driverLicense);
         $('#edit-vehicleno').val(vehicleno);
         $('#edit-description').val(description);
-        $('#edit-advance').val(advance);
+  
 
         // Show the modal
         $('#editdriverModal').modal('show');
@@ -308,7 +300,7 @@
         let driverLicense = $('#editdriver-license').val();
         let vehicleno = $('#edit-vehicleno').val();
         let description = $('#edit-description').val();
-        let advance = $('#edit-advance').val();
+        
 
         if (driverName.trim() !== "") {
             $.ajax({
@@ -322,7 +314,7 @@
                     driverLicense: driverLicense,
                     vehicleno: vehicleno,
                     description: description,
-                    advance: advance
+             
 
 
                 },
